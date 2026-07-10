@@ -1,0 +1,92 @@
+name: Processar Edital
+
+on:
+  workflow_dispatch:
+    inputs:
+      pdf_filename:
+        description: 'Nome do arquivo PDF (em editais/)'
+        required: true
+        type: string
+      cargo:
+        description: 'Cargo de interesse'
+        required: true
+        type: string
+      sigla:
+        description: 'Sigla do órgão (opcional)'
+        required: false
+        type: string
+        default: ''
+      ano:
+        description: 'Ano do edital'
+        required: false
+        type: string
+        default: '2026'
+      observacoes:
+        description: 'Observações adicionais (opcional)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  processar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências Python
+        run: pip install pdfplumber pyyaml
+
+      - name: Processar edital
+        env:
+          PDF_FILE: ${{ github.event.inputs.pdf_filename }}
+          CARGO: ${{ github.event.inputs.cargo }}
+          SIGLA: ${{ github.event.inputs.sigla }}
+          ANO: ${{ github.event.inputs.ano }}
+          OBSERVACOES: ${{ github.event.inputs.observacoes }}
+        run: |
+          python scripts/processar_edital_ci.py
+
+      - name: Commit resultado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add content/editais/*.md
+          git diff --staged --quiet || git commit -m "📊 Edital processado: ${{ github.event.inputs.pdf_filename }} (${{ github.event.inputs.cargo }})"
+          git push
+
+      - name: Criar Issue se houver dados faltantes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Verificar se o .md gerado tem dados_faltantes
+          LATEST_MD=$(ls -t content/editais/*.md | grep -v _schema | head -1)
+          if grep -q "dados_faltantes:" "$LATEST_MD" && grep -A 100 "dados_faltantes:" "$LATEST_MD" | grep -q "campo:"; then
+            # Extrair dados faltantes
+            FALTANTES=$(grep -A 100 "dados_faltantes:" "$LATEST_MD" | grep "descricao:" | sed 's/.*descricao: "\(.*\)"/- [ ] \1/' | head -20)
+            
+            gh issue create \
+              --title "⚠️ Dados faltantes: ${{ github.event.inputs.pdf_filename }}" \
+              --body "## Dados não encontrados no edital
+
+          O processamento automático do edital **${{ github.event.inputs.pdf_filename }}** (cargo: **${{ github.event.inputs.cargo }}**) não conseguiu extrair os seguintes dados:
+
+          ${FALTANTES}
+
+          ### Como completar
+
+          1. Edite o arquivo \`${LATEST_MD}\` diretamente no repositório
+          2. Preencha os campos marcados como \`null\` ou vazios no front-matter YAML
+          3. Mude o \`status\` de \`parcial\` para \`completo\` quando todos estiverem preenchidos
+
+          ---
+          *Issue criada automaticamente pelo processador de editais.*" \
+              --label "dados-faltantes"
+          fi

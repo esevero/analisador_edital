@@ -1,0 +1,20 @@
+{
+  "name": "analisador-editais",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Plataforma de análise de editais de concursos públicos",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "processar": "python scripts/processar_edital.py"
+  },
+  "dependencies": {
+    "astro": "^4.0.0",
+    "@astrojs/mdx": "^3.0.0",
+    "chart.js": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

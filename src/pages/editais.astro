@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+
+const editaisFiles = await Astro.glob('../../content/editais/*.md');
+const editais = editaisFiles
+  .filter(e => !e.file.includes('_schema'))
+  .map(e => ({ ...e.frontmatter, url: e.url }))
+  .filter(e => e.id)
+  .sort((a, b) => (b.edital_ano || 0) - (a.edital_ano || 0));
+---
+
+<Base title="Editais Analisados">
+  <section class="page-header">
+    <h1>📄 Editais Analisados</h1>
+    <p>{editais.length} edital(is) no sistema</p>
+  </section>
+
+  <div class="filters">
+    <select id="filterStatus">
+      <option value="">Todos os status</option>
+      <option value="completo">Completo</option>
+      <option value="parcial">Parcial</option>
+      <option value="pendente">Pendente</option>
+    </select>
+    <select id="filterRegime">
+      <option value="">Todos os regimes</option>
+      <option value="Estatutário">Estatutário</option>
+      <option value="CLT">CLT</option>
+    </select>
+  </div>
+
+  {editais.length === 0 ? (
+    <div class="empty-state">
+      <h3>Nenhum edital processado ainda</h3>
+      <p>Adicione seu primeiro edital para começar a análise.</p>
+      <a href={`${import.meta.env.BASE_URL}adicionar/`} class="btn btn-primary">+ Adicionar Edital</a>
+    </div>
+  ) : (
+    <div class="editais-table-container">
+      <table class="editais-table">
+        <thead>
+          <tr>
+            <th>Órgão</th>
+            <th>Cargo</th>
+            <th>Banca</th>
+            <th>Ano</th>
+            <th>Remun. Total Inicial</th>
+            <th>Regime</th>
+            <th>Status</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {editais.map(ed => (
+            <tr data-status={ed.status} data-regime={ed.regime}>
+              <td><strong>{ed.sigla || ed.orgao?.substring(0, 20)}</strong></td>
+              <td>{ed.cargo?.substring(0, 40)}</td>
+              <td>{ed.banca || '?'}</td>
+              <td>{ed.edital_ano || '?'}</td>
+              <td class="money">
+                {ed.remuneracao?.remuneracao_total_inicial
+                  ? `R$ ${ed.remuneracao.remuneracao_total_inicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
+                  : '—'}
+              </td>
+              <td>{ed.regime || '?'}</td>
+              <td><span class={`badge badge-${ed.status}`}>{ed.status}</span></td>
+              <td>
+                <a href={`${import.meta.env.BASE_URL}editais/${ed.id}/`} class="btn btn-sm">Ver</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</Base>
+
+<script>
+  // Filtros simples client-side
+  document.getElementById('filterStatus')?.addEventListener('change', filtrar);
+  document.getElementById('filterRegime')?.addEventListener('change', filtrar);
+  
+  function filtrar() {
+    const status = document.getElementById('filterStatus')?.value || '';
+    const regime = document.getElementById('filterRegime')?.value || '';
+    document.querySelectorAll('tbody tr').forEach(tr => {
+      const matchStatus = !status || tr.dataset.status === status;
+      const matchRegime = !regime || tr.dataset.regime?.includes(regime);
+      tr.style.display = (matchStatus && matchRegime) ? '' : 'none';
+    });
+  }
+</script>

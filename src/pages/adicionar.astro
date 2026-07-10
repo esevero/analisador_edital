@@ -1,0 +1,447 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Adicionar Edital">
+  <section class="page-header">
+    <h1>+ Adicionar Novo Edital</h1>
+    <p>Faca upload do PDF do edital, informe o cargo desejado e o sistema processara automaticamente.</p>
+  </section>
+
+  <!-- Painel de configuracao (aparece se nao tiver token salvo) -->
+  <div id="configPanel" class="config-panel" style="display:none;">
+    <div class="config-card">
+      <h3>Configuracao do GitHub</h3>
+      <p>Informe seu token de acesso para conectar ao repositorio. O token fica salvo apenas no seu navegador (localStorage).</p>
+      <div class="form-group">
+        <label for="cfgToken">Personal Access Token (Fine-Grained)</label>
+        <input type="password" id="cfgToken" placeholder="github_pat_..." />
+        <small>Permissoes necessarias: Contents (read/write) + Actions (read/write)</small>
+      </div>
+      <button id="btnSaveConfig" class="btn btn-primary">Salvar Configuracao</button>
+    </div>
+  </div>
+
+  <!-- Indicador de conexao -->
+  <div id="connStatus" class="conn-status" style="display:none;">
+    <span class="conn-dot"></span>
+    <span>Conectado como <strong id="connUser"></strong></span>
+    <button id="btnReconfig" class="btn btn-sm btn-ghost">Alterar token</button>
+  </div>
+
+  <div class="upload-container">
+    <form id="uploadForm" class="upload-form">
+      <!-- Drag and Drop -->
+      <div id="dropZone" class="drop-zone">
+        <div class="drop-zone-content">
+          <span class="drop-icon">📄</span>
+          <p>Arraste o PDF aqui ou <label for="fileInput" class="file-label">clique para selecionar</label></p>
+          <input type="file" id="fileInput" accept=".pdf" hidden />
+          <span id="fileName" class="file-name"></span>
+        </div>
+      </div>
+
+      <!-- Cargo -->
+      <div class="form-group">
+        <label for="cargo">Cargo de interesse *</label>
+        <input type="text" id="cargo" placeholder="Ex: Analista Judiciario - Tecnologia da Informacao" required />
+        <small>Digite o nome do cargo exatamente como aparece no edital</small>
+      </div>
+
+      <!-- Orgao (opcional, ajuda na extracao) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sigla">Sigla do orgao</label>
+          <input type="text" id="sigla" placeholder="Ex: TJCE, IPECE, DATAPREV" />
+        </div>
+        <div class="form-group">
+          <label for="ano">Ano do edital</label>
+          <input type="number" id="ano" placeholder="2026" value="2026" />
+        </div>
+      </div>
+
+      <!-- Notas opcionais -->
+      <details class="notas-section">
+        <summary>Informacoes adicionais (opcional)</summary>
+        <div class="form-group">
+          <label for="observacoes">Observacoes / dados que voce ja sabe</label>
+          <textarea id="observacoes" rows="4" placeholder="Ex: Vencimento base R$ 10.099,28 + GAM 30% a 60%. Auxilio alimentacao R$ 1.050..."></textarea>
+          <small>Essas informacoes ajudam se o PDF nao for bem estruturado</small>
+        </div>
+      </details>
+
+      <!-- Submit -->
+      <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg">
+        Processar Edital
+      </button>
+    </form>
+
+    <!-- Status -->
+    <div id="status" class="status-container" style="display:none;">
+      <div id="statusContent"></div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  // ─── CONFIGURACAO ───
+  // Owner e repo ficam no codigo (nao sao secrets).
+  // O token fica APENAS no localStorage do navegador do usuario.
+  const REPO_CONFIG = {
+    owner: 'esevero',
+    repo: 'analisador_edital',
+    workflow_id: 'processar-edital.yml',
+    branch: 'main',
+  };
+
+  function getToken() {
+    return localStorage.getItem('gh_pat') || '';
+  }
+
+  function saveToken(token) {
+    localStorage.setItem('gh_pat', token.trim());
+  }
+
+  function clearToken() {
+    localStorage.removeItem('gh_pat');
+  }
+
+  // ─── INIT: verificar se tem token ───
+  const configPanel = document.getElementById('configPanel');
+  const connStatus = document.getElementById('connStatus');
+  const connUser = document.getElementById('connUser');
+  const uploadForm = document.getElementById('uploadForm');
+
+  function initUI() {
+    if (getToken()) {
+      configPanel.style.display = 'none';
+      connStatus.style.display = 'flex';
+      connUser.textContent = REPO_CONFIG.owner;
+      uploadForm.style.display = 'flex';
+    } else {
+      configPanel.style.display = 'block';
+      connStatus.style.display = 'none';
+      uploadForm.style.display = 'none';
+    }
+  }
+
+  initUI();
+
+  // Salvar config
+  document.getElementById('btnSaveConfig').addEventListener('click', () => {
+    const token = document.getElementById('cfgToken').value.trim();
+    if (!token) {
+      alert('Informe o token.');
+      return;
+    }
+    saveToken(token);
+    initUI();
+  });
+
+  // Reconfigurar
+  document.getElementById('btnReconfig').addEventListener('click', () => {
+    clearToken();
+    initUI();
+  });
+
+  // ─── ELEMENTOS ───
+  const form = document.getElementById('uploadForm');
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('fileName');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const statusDiv = document.getElementById('status');
+  const statusContent = document.getElementById('statusContent');
+
+  let selectedFile = null;
+
+  // ─── DRAG AND DROP ───
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      handleFile(file);
+    } else {
+      showStatus('error', 'Apenas arquivos PDF sao aceitos.');
+    }
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    selectedFile = file;
+    fileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+    dropZone.classList.add('has-file');
+  }
+
+  // ─── SUBMIT ───
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const token = getToken();
+    if (!token) {
+      showStatus('error', 'Configure o token primeiro.');
+      return;
+    }
+
+    if (!selectedFile) {
+      showStatus('error', 'Selecione um arquivo PDF.');
+      return;
+    }
+
+    const cargo = document.getElementById('cargo').value.trim();
+    if (!cargo) {
+      showStatus('error', 'Informe o cargo de interesse.');
+      return;
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Enviando...';
+    showStatus('info', 'Convertendo PDF e enviando para processamento...');
+
+    try {
+      // 1. Converter PDF para base64
+      const base64 = await fileToBase64(selectedFile);
+      
+      // 2. Upload do PDF no repo
+      showStatus('info', 'Salvando PDF no repositorio...');
+      await uploadFileToRepo(selectedFile.name, base64, token);
+
+      // 3. Disparar workflow_dispatch
+      showStatus('info', 'Disparando processamento automatico...');
+      await triggerWorkflow(selectedFile.name, cargo, token);
+
+      showStatus('success', `
+        <h3>Edital enviado com sucesso!</h3>
+        <p><strong>Arquivo:</strong> ${selectedFile.name}</p>
+        <p><strong>Cargo:</strong> ${cargo}</p>
+        <p>O GitHub Action esta processando o edital agora. Em alguns minutos:</p>
+        <ul>
+          <li>O arquivo .md sera gerado automaticamente</li>
+          <li>O site sera atualizado com o novo edital</li>
+          <li>Se faltar dados, uma Issue sera criada pedindo as informacoes</li>
+        </ul>
+        <p><a href="https://github.com/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/actions" target="_blank" class="btn btn-sm">Ver progresso no GitHub Actions</a></p>
+      `);
+
+    } catch (err) {
+      if (err.message.includes('401') || err.message.includes('403')) {
+        showStatus('error', `Erro de autenticacao. Verifique se o token esta correto e tem as permissoes necessarias.<br><br>${err.message}`);
+      } else {
+        showStatus('error', `Erro: ${err.message}`);
+      }
+      console.error(err);
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Processar Edital';
+    }
+  });
+
+  // ─── FUNCOES GITHUB API ───
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadFileToRepo(filename, base64Content, token) {
+    const path = `editais/${filename}`;
+    const url = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${path}`;
+
+    // Verificar se ja existe
+    let sha = null;
+    try {
+      const check = await fetch(url, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (check.ok) {
+        const data = await check.json();
+        sha = data.sha;
+      }
+    } catch {}
+
+    const body = {
+      message: `Upload: ${filename}`,
+      content: base64Content,
+      branch: REPO_CONFIG.branch,
+    };
+    if (sha) body.sha = sha;
+
+    const resp = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(`Upload falhou: ${err.message}`);
+    }
+  }
+
+  async function triggerWorkflow(filename, cargo, token) {
+    const sigla = document.getElementById('sigla').value.trim();
+    const ano = document.getElementById('ano').value.trim();
+    const observacoes = document.getElementById('observacoes')?.value?.trim() || '';
+
+    const url = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/actions/workflows/${REPO_CONFIG.workflow_id}/dispatches`;
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ref: REPO_CONFIG.branch,
+        inputs: {
+          pdf_filename: filename,
+          cargo: cargo,
+          sigla: sigla || '',
+          ano: ano || '2026',
+          observacoes: observacoes,
+        },
+      }),
+    });
+
+    if (!resp.ok && resp.status !== 204) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(`Workflow dispatch falhou: ${err.message || resp.status}`);
+    }
+  }
+
+  // ─── UI HELPERS ───
+  function showStatus(type, html) {
+    statusDiv.style.display = 'block';
+    statusDiv.className = `status-container status-${type}`;
+    statusContent.innerHTML = html;
+    statusDiv.scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+
+<style>
+  .upload-container { max-width: 700px; margin: 0 auto; }
+  
+  .upload-form { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .config-panel { max-width: 700px; margin: 0 auto 2rem; }
+  .config-card {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+  .config-card h3 { margin-bottom: 0.5rem; }
+  .config-card p { margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted); }
+
+  .conn-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 700px;
+    margin: 0 auto 1.5rem;
+    padding: 0.75rem 1rem;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+  }
+  .conn-dot {
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    margin-left: auto;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .btn-ghost:hover { background: #f1f5f9; }
+  
+  .drop-zone {
+    border: 3px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--card-bg);
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--primary-light);
+    background: #f0f7ff;
+  }
+  .drop-zone.has-file {
+    border-color: var(--success);
+    background: #f0fdf4;
+  }
+  .drop-icon { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+  .file-label { color: var(--primary-light); cursor: pointer; text-decoration: underline; }
+  .file-name { display: block; margin-top: 0.5rem; font-weight: 600; color: var(--success); }
+
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .form-group label { font-weight: 600; font-size: 0.9rem; }
+  .form-group input, .form-group textarea, .form-group select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
+  }
+  .form-group small { color: var(--text-muted); font-size: 0.8rem; }
+  
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .btn-lg { padding: 1rem 2rem; font-size: 1.1rem; width: 100%; }
+  .btn-lg:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .notas-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); }
+  .notas-section summary { padding: 1rem; cursor: pointer; font-weight: 600; }
+  .notas-section .form-group { padding: 0 1rem 1rem; }
+
+  .status-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .status-info { background: #eff6ff; border-color: #bfdbfe; }
+  .status-success { background: #f0fdf4; border-color: #86efac; }
+  .status-error { background: #fef2f2; border-color: #fecaca; }
+  .status-container h3 { margin-bottom: 0.5rem; }
+  .status-container ul { margin: 0.5rem 0; padding-left: 1.5rem; }
+  .status-container li { margin: 0.3rem 0; }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>

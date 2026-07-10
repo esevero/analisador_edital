@@ -1,0 +1,45 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Plataforma de análise de editais de concursos públicos" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <title>{title} | Analisador de Editais</title>
+  <link rel="stylesheet" href={`${import.meta.env.BASE_URL}assets/css/style.css`} />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href={import.meta.env.BASE_URL} class="logo">📋 Analisador de Editais</a>
+      <ul class="nav-links">
+        <li><a href={`${import.meta.env.BASE_URL}`}>Início</a></li>
+        <li><a href={`${import.meta.env.BASE_URL}editais/`}>Editais</a></li>
+        <li><a href={`${import.meta.env.BASE_URL}comparativo/`}>Comparativo</a></li>
+        <li><a href={`${import.meta.env.BASE_URL}ranking/`}>Ranking</a></li>
+        <li><a href={`${import.meta.env.BASE_URL}adicionar/`}>+ Adicionar</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <slot />
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>Analisador de Editais &mdash; Ferramenta de apoio à decisão de carreira no serviço público</p>
+      <p><small>Dados extraídos automaticamente dos editais. Sempre confirme no edital oficial.</small></p>
+    </div>
+  </footer>
+</body>
+</html>
