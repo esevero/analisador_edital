@@ -1,0 +1,318 @@
+---
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const editaisFiles = await Astro.glob('../../../content/editais/*.md');
+  return editaisFiles
+    .filter(e => !e.file.includes('_schema'))
+    .filter(e => e.frontmatter.id)
+    .map(e => ({
+      params: { id: e.frontmatter.id },
+      props: { edital: e.frontmatter, Content: e.Content },
+    }));
+}
+
+const { edital, Content } = Astro.props;
+
+const remTotal = edital.remuneracao?.remuneracao_total_inicial;
+const remMax = edital.remuneracao?.remuneracao_total_maxima;
+const venc = edital.remuneracao?.vencimento_base;
+---
+
+<Base title={`${edital.sigla || edital.orgao} – ${edital.cargo}`}>
+  <section class="page-header">
+    <div class="edital-header">
+      <span class={`badge badge-${edital.status}`}>{edital.status}</span>
+      <span class="badge badge-banca">{edital.banca || '?'}</span>
+      {edital.edital_ano && <span class="badge">{edital.edital_ano}</span>}
+    </div>
+    <h1>{edital.sigla || edital.orgao}</h1>
+    <p class="cargo-subtitle">{edital.cargo}</p>
+    {edital.orgao && <p class="orgao-full">{edital.orgao}</p>}
+  </section>
+
+  <!-- Resumo financeiro -->
+  <section class="financeiro-resumo">
+    <div class="finance-cards">
+      {venc && (
+        <div class="finance-card">
+          <span class="finance-label">Vencimento Base</span>
+          <span class="finance-value">R$ {venc.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        </div>
+      )}
+      {remTotal && (
+        <div class="finance-card highlight">
+          <span class="finance-label">Remun. Total Inicial</span>
+          <span class="finance-value">R$ {remTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        </div>
+      )}
+      {remMax && (
+        <div class="finance-card">
+          <span class="finance-label">Remun. Total Maxima</span>
+          <span class="finance-value">R$ {remMax.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Info geral -->
+  <section class="info-grid">
+    <div class="info-item">
+      <strong>Regime</strong>
+      <span>{edital.regime || 'Nao informado'}</span>
+    </div>
+    <div class="info-item">
+      <strong>Jornada</strong>
+      <span>{edital.jornada_semanal || 'Nao informada'}</span>
+    </div>
+    <div class="info-item">
+      <strong>Escolaridade</strong>
+      <span>{edital.escolaridade || 'Nao informada'}</span>
+    </div>
+    {edital.vagas_total && (
+      <div class="info-item">
+        <strong>Vagas</strong>
+        <span>{edital.vagas_total}</span>
+      </div>
+    )}
+    {edital.local_trabalho && (
+      <div class="info-item">
+        <strong>Local</strong>
+        <span>{edital.local_trabalho}</span>
+      </div>
+    )}
+  </section>
+
+  <!-- Gratificacoes -->
+  {edital.remuneracao?.gratificacoes?.length > 0 && (
+    <section class="section-block">
+      <h2>Gratificacoes</h2>
+      <table class="editais-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Valor Inicial</th>
+            <th>Valor Maximo</th>
+            <th>Percentual</th>
+            <th>Obs.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {edital.remuneracao.gratificacoes.map(g => (
+            <tr>
+              <td><strong>{g.nome}</strong></td>
+              <td>{g.valor_inicial ? `R$ ${g.valor_inicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '—'}</td>
+              <td>{g.valor_maximo ? `R$ ${g.valor_maximo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '—'}</td>
+              <td>{g.percentual || '—'}</td>
+              <td>{g.observacao || ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )}
+
+  <!-- Beneficios -->
+  {edital.beneficios && (
+    <section class="section-block">
+      <h2>Beneficios</h2>
+      <div class="info-grid">
+        {edital.beneficios.aux_alimentacao && (
+          <div class="info-item">
+            <strong>Aux. Alimentacao</strong>
+            <span>R$ {edital.beneficios.aux_alimentacao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+          </div>
+        )}
+        {edital.beneficios.aux_saude && (
+          <div class="info-item">
+            <strong>Aux. Saude</strong>
+            <span>R$ {edital.beneficios.aux_saude.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+          </div>
+        )}
+        {edital.beneficios.aux_creche && (
+          <div class="info-item">
+            <strong>Aux. Creche</strong>
+            <span>R$ {edital.beneficios.aux_creche.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+          </div>
+        )}
+        {edital.beneficios.plano_saude && (
+          <div class="info-item">
+            <strong>Plano de Saude</strong>
+            <span>{edital.beneficios.plano_saude}</span>
+          </div>
+        )}
+        {edital.beneficios.aux_transporte && (
+          <div class="info-item">
+            <strong>Transporte</strong>
+            <span>{edital.beneficios.aux_transporte}</span>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  <!-- Titulacao -->
+  {edital.titulacao && (edital.titulacao.especializacao_percentual || edital.titulacao.mestrado_percentual || edital.titulacao.doutorado_percentual) && (
+    <section class="section-block">
+      <h2>Adicional de Titulacao</h2>
+      <table class="editais-table">
+        <thead>
+          <tr>
+            <th>Titulo</th>
+            <th>Percentual</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {edital.titulacao.especializacao_percentual && (
+            <tr>
+              <td>Especializacao</td>
+              <td>{edital.titulacao.especializacao_percentual}%</td>
+              <td>{edital.titulacao.especializacao_valor ? `R$ ${edital.titulacao.especializacao_valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '—'}</td>
+            </tr>
+          )}
+          {edital.titulacao.mestrado_percentual && (
+            <tr>
+              <td>Mestrado</td>
+              <td>{edital.titulacao.mestrado_percentual}%</td>
+              <td>{edital.titulacao.mestrado_valor ? `R$ ${edital.titulacao.mestrado_valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '—'}</td>
+            </tr>
+          )}
+          {edital.titulacao.doutorado_percentual && (
+            <tr>
+              <td>Doutorado</td>
+              <td>{edital.titulacao.doutorado_percentual}%</td>
+              <td>{edital.titulacao.doutorado_valor ? `R$ ${edital.titulacao.doutorado_valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '—'}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      {edital.titulacao.observacoes && <p class="obs-text">{edital.titulacao.observacoes}</p>}
+    </section>
+  )}
+
+  <!-- Carreira -->
+  {edital.carreira && edital.carreira.plano_nome && (
+    <section class="section-block">
+      <h2>Carreira</h2>
+      <div class="info-grid">
+        <div class="info-item"><strong>Plano</strong><span>{edital.carreira.plano_nome}</span></div>
+        {edital.carreira.niveis && <div class="info-item"><strong>Niveis</strong><span>{edital.carreira.niveis}</span></div>}
+        {edital.carreira.progressao_horizontal && <div class="info-item"><strong>Prog. Horizontal</strong><span>{edital.carreira.progressao_horizontal}</span></div>}
+        {edital.carreira.progressao_vertical && <div class="info-item"><strong>Prog. Vertical</strong><span>{edital.carreira.progressao_vertical}</span></div>}
+        {edital.carreira.tempo_minimo_progressao && <div class="info-item"><strong>Tempo Min. Progressao</strong><span>{edital.carreira.tempo_minimo_progressao}</span></div>}
+      </div>
+    </section>
+  )}
+
+  <!-- Trabalho -->
+  {edital.trabalho && edital.trabalho.home_office && (
+    <section class="section-block">
+      <h2>Qualidade de Vida</h2>
+      <div class="info-grid">
+        {edital.trabalho.home_office && <div class="info-item"><strong>Home Office</strong><span>{edital.trabalho.home_office}</span></div>}
+        {edital.trabalho.dias_remotos && <div class="info-item"><strong>Dias Remotos</strong><span>{edital.trabalho.dias_remotos}</span></div>}
+        {edital.trabalho.flexibilidade_horario && <div class="info-item"><strong>Flexibilidade</strong><span>{edital.trabalho.flexibilidade_horario}</span></div>}
+        {edital.trabalho.banco_horas && <div class="info-item"><strong>Banco de Horas</strong><span>{edital.trabalho.banco_horas}</span></div>}
+      </div>
+    </section>
+  )}
+
+  <!-- Dados Faltantes -->
+  {edital.dados_faltantes?.length > 0 && (
+    <section class="section-block alert-block">
+      <h2>Dados Pendentes</h2>
+      <p>Os seguintes campos nao foram preenchidos:</p>
+      <ul>
+        {edital.dados_faltantes.map(d => (
+          <li>{d.descricao} (<code>{d.campo}</code>)</li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <!-- Conteudo Markdown -->
+  <section class="section-block markdown-content">
+    <Content />
+  </section>
+
+  <!-- Fontes -->
+  {edital.fontes?.length > 0 && (
+    <section class="section-block">
+      <h2>Fontes</h2>
+      <ul>
+        {edital.fontes.map(f => (
+          <li>
+            <strong>{f.tipo}:</strong> {f.descricao}
+            {f.link && <a href={f.link} target="_blank" rel="noopener"> (link)</a>}
+            {f.data && <span class="fonte-data"> – {f.data}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <div class="back-link">
+    <a href={`${import.meta.env.BASE_URL}editais/`} class="btn">Voltar para Editais</a>
+  </div>
+</Base>
+
+<style>
+  .edital-header { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .cargo-subtitle { font-size: 1.2rem; color: var(--text-muted); margin-top: 0.25rem; }
+  .orgao-full { font-size: 0.9rem; color: var(--text-muted); }
+
+  .financeiro-resumo { margin: 2rem 0; }
+  .finance-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+  .finance-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .finance-card.highlight {
+    background: #f0fdf4;
+    border-color: #86efac;
+  }
+  .finance-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+  .finance-value { display: block; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    background: var(--card-bg);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .info-item strong { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+  .info-item span { font-size: 1rem; }
+
+  .section-block { margin: 2rem 0; }
+  .section-block h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+
+  .alert-block {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  .obs-text { margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-muted); font-style: italic; }
+
+  .markdown-content { line-height: 1.7; }
+  .markdown-content h2 { margin-top: 2rem; }
+  .markdown-content h3 { margin-top: 1.5rem; }
+
+  .fonte-data { color: var(--text-muted); font-size: 0.85rem; }
+
+  .back-link { margin: 3rem 0; text-align: center; }
+</style>
