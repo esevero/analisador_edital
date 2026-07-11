@@ -3,6 +3,15 @@ dist/
 .astro/
 *.log
 .env
-editais/*.pdf
 __pycache__/
 *.pyc
+
+# PDFs de editais (uploados via site)
+editais/*.pdf
+
+# Editais processados (gerados pelo workflow)
+# Exemplos são mantidos via git add --force
+content/editais/*.md
+!content/editais/_schema.md
+!content/editais/tjce-2026-analista-judiciario-ti.md
+!content/editais/ipece-2023-analista-ti.md
