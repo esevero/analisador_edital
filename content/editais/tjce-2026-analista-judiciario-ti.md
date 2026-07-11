@@ -1,6 +1,7 @@
 ---
 id: tjce-2026-analista-judiciario-ti
 status: completo
+peso: 5
 data_processamento: "10/07/2026"
 edital_arquivo: "edital-tjce-2026-fcc.pdf"
 orgao: "Tribunal de Justiça do Estado do Ceará"

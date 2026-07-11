@@ -228,6 +228,7 @@ def main():
     dados = {
         'id': slug,
         'status': 'parcial',
+        'peso': 5,
         'data_processamento': date.today().strftime('%d/%m/%Y'),
         'edital_arquivo': PDF_FILE,
         'orgao': orgao_data.get('orgao', ''),

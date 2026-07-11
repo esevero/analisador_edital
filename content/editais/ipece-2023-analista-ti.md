@@ -1,6 +1,7 @@
 ---
 id: ipece-2023-analista-ti
 status: parcial
+peso: 5
 data_processamento: "10/07/2026"
 edital_arquivo: "edital-ipece-instituto-avalia.pdf"
 orgao: "Instituto de Pesquisa e Estratégia Econômica do Ceará"

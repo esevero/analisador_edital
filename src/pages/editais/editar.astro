@@ -68,6 +68,9 @@ import Base from '../../layouts/Base.astro';
 
   // Field definitions grouped by section
   const SECTIONS = [
+    { title: 'Importancia', fields: [
+      { key: 'peso', label: 'Importancia deste edital (0 = menos importante, 10 = mais importante)', type: 'number', step: '1', min: 0, max: 10 },
+    ]},
     { title: 'Identificacao', fields: [
       { key: 'orgao', label: 'Orgao', type: 'text' },
       { key: 'sigla', label: 'Sigla', type: 'text' },
@@ -129,16 +132,6 @@ import Base from '../../layouts/Base.astro';
       { key: 'flexibilidade_horario', label: 'Flexibilidade', type: 'text' },
       { key: 'banco_horas', label: 'Banco de Horas', type: 'select', options: ['', 'Sim', 'Nao'] },
       { key: 'plantao_sobreaviso', label: 'Plantao/Sobreaviso', type: 'text' },
-    ]},
-    { title: 'Notas (0-10)', prefix: 'notas', fields: [
-      { key: 'remuneracao', label: 'Remuneracao', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'beneficios', label: 'Beneficios', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'crescimento', label: 'Crescimento', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'qualidade_vida', label: 'Qualidade de Vida', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'flexibilidade', label: 'Flexibilidade', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'estabilidade', label: 'Estabilidade', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'valorizacao_ti', label: 'Valorizacao TI', type: 'number', step: '0.5', min: 0, max: 10 },
-      { key: 'localizacao', label: 'Localizacao', type: 'number', step: '0.5', min: 0, max: 10 },
     ]},
   ];
 
@@ -300,6 +293,11 @@ import Base from '../../layouts/Base.astro';
   }
 
   function renderForm() {
+    // Default peso to 5 if not set
+    if (originalData.peso === undefined || originalData.peso === null) {
+      originalData.peso = 5;
+    }
+
     let html = '';
     for (const section of SECTIONS) {
       html += `<fieldset class="form-section"><legend>${section.title}</legend><div class="fields-grid">`;
@@ -482,30 +480,33 @@ import Base from '../../layouts/Base.astro';
 </script>
 
 <style>
-  .loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+  .loading-state { text-align: center; padding: 3rem; color: #6b7280; }
 
   .config-panel { max-width: 700px; margin: 2rem auto; }
   .config-card {
     background: #fffbeb;
     border: 1px solid #f59e0b;
-    border-radius: var(--radius);
+    border-radius: 12px;
     padding: 1.5rem;
   }
+  .config-card a { color: #2563eb; }
 
-  .editor-info { margin-bottom: 1.5rem; }
+  .editor-info { margin-bottom: 1.5rem; max-width: 900px; margin-left: auto; margin-right: auto; }
 
   .editor-form { max-width: 900px; margin: 0 auto; }
 
   .form-section {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    background: #fff;
   }
   .form-section legend {
     font-weight: 700;
     font-size: 1.1rem;
     padding: 0 0.5rem;
+    color: #1e293b;
   }
 
   .fields-grid {
@@ -516,16 +517,18 @@ import Base from '../../layouts/Base.astro';
   }
 
   .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
-  .form-group label { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
+  .form-group label { font-weight: 600; font-size: 0.85rem; color: #6b7280; }
   .form-group input, .form-group select {
     padding: 0.6rem 0.8rem;
-    border: 1px solid var(--border);
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     font-size: 0.95rem;
+    background: #fff;
+    color: #1e293b;
   }
   .form-group input:focus, .form-group select:focus {
     outline: none;
-    border-color: var(--primary-light);
+    border-color: #4472c4;
     box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
   }
 
@@ -547,9 +550,21 @@ import Base from '../../layouts/Base.astro';
   .status-container {
     margin-top: 1.5rem;
     padding: 1rem 1.5rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
   }
   .status-success { background: #f0fdf4; border-color: #86efac; }
   .status-error { background: #fef2f2; border-color: #fecaca; }
+
+  .badge-parcial {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
 </style>
