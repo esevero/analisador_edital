@@ -1,6 +1,6 @@
 ---
-id: ipece-2023-analista-ti
-status: parcial
+id: "ipece-2023-analista-ti"
+status: "parcial"
 peso: 5
 data_processamento: "10/07/2026"
 edital_arquivo: "edital-ipece-instituto-avalia.pdf"
@@ -10,44 +10,35 @@ esfera: "Estadual"
 estado: "CE"
 cidade: "Fortaleza"
 banca: "Instituto Avalia"
-edital_numero: ""
+edital_numero: null
 edital_ano: 2023
-edital_link: ""
+edital_link: "https://www.concursosfcc.com.br/concursos/sface125/sface125_edital_de_abertura_final-publicar_-_docx.pdf"
 cargo: "Analista de Políticas Públicas – Tecnologia da Informação"
 area: "Tecnologia da Informação"
 escolaridade: "Nível Superior"
-formacao_exigida: ""
+formacao_exigida: null
 vagas_total: null
-regime: "Estatutário (Regime Próprio CE)"
+regime: null
 jornada_semanal: "40 horas semanais"
 local_trabalho: "Sede IPECE – Fortaleza"
-
 remuneracao:
   vencimento_base: 5428.69
-  gratificacoes:
-    - nome: "GDAP – Gratificação de Desempenho por Atividade de Pesquisa"
-      valor_inicial: 11417.05
-      valor_maximo: 15222.73
-      percentual: "75% do teto (inicial) até 60% da última classe/ref (R$ 25.371,22)"
-      base_calculo: "Teto estipulado em edital / última classe da tabela"
-      observacao: "Gratificação muito expressiva – representa a maior parte da remuneração"
+  gratificacoes: ""
   remuneracao_total_inicial: 16884.27
   remuneracao_total_maxima: 20651.42
-  teto_remuneratorio: 34000.00
-
+  teto_remuneratorio: 34000
 beneficios:
-  aux_alimentacao: 800.00
+  aux_alimentacao: 800
   aux_refeicao: 0
   aux_saude: null
-  plano_saude: ""
+  plano_saude: null
   plano_odonto: ""
   aux_transporte: "Vale-transporte"
   aux_creche: null
   previdencia_complementar: "FUNCIFOR (Ceará)"
   plr: ""
   seguro_vida: ""
-  outros: ""
-
+  outros: null
 carreira:
   plano_nome: "Plano de Cargos e Carreiras IPECE (Lei Estadual CE)"
   classes: "Classe única com faixas salariais"
@@ -57,26 +48,23 @@ carreira:
   tempo_minimo_progressao: "3 anos"
   criterios: "Avaliação de desempenho + tempo de serviço"
   avaliacao_desempenho: "Anual"
-
 titulacao:
-  especializacao_percentual: 7.0
-  especializacao_valor: 380.00
-  mestrado_percentual: 12.0
-  mestrado_valor: 651.00
-  doutorado_percentual: 18.0
-  doutorado_valor: 977.00
+  especializacao_percentual: 7
+  especializacao_valor: 380
+  mestrado_percentual: 12
+  mestrado_valor: 651
+  doutorado_percentual: 18
+  doutorado_valor: 977
   base_calculo: "Vencimento base (R$ 5.428,69)"
   certificacoes: ""
   observacoes: "Percentual incide sobre o vencimento base apenas (não sobre GDAP)"
-
 trabalho:
-  home_office: "Limitado"
+  home_office: null
   teletrabalho_regulamentado: ""
   dias_remotos: "0-1 dia/semana"
   flexibilidade_horario: "Baixa – horário rígido"
-  banco_horas: "Não regulamentado"
+  banco_horas: null
   plantao_sobreaviso: "Não habitual"
-
 localizacao:
   endereco: "Av. General Afonso Albuquerque Lima, s/n – Ed. SEPLAG"
   bairro: "Cambeba"
@@ -84,32 +72,23 @@ localizacao:
   transporte_publico: "Linhas Papicu, Cocó; BRT Av. Washington Soares próximo"
   estacionamento: "Sim"
   observacoes: "Bairro nobre; infraestrutura moderna"
-
 notas:
-  remuneracao: 9.0
+  remuneracao: 9
   beneficios: 8.5
-  crescimento: 8.0
+  crescimento: 8
   qualidade_vida: 8.5
-  flexibilidade: 5.0
+  flexibilidade: 5
   estabilidade: 8.5
   valorizacao_ti: 8.5
-  localizacao: 8.0
-
+  localizacao: 8
 fontes:
   - tipo: "Oficial"
     descricao: "Dados do edital – Instituto Avalia / IPECE"
     link: "https://www.ipece.ce.gov.br"
     data: "10/07/2026"
-
 dados_faltantes:
-  - campo: "edital_link"
-    descricao: "Link direto para o edital PDF"
-  - campo: "vagas_total"
-    descricao: "Número exato de vagas"
-  - campo: "beneficios.aux_saude"
-    descricao: "Valor do auxílio saúde (se houver)"
-  - campo: "beneficios.plano_saude"
-    descricao: "Detalhes do plano de saúde"
+  - campo: "regime"
+    descricao: "Regime juridico"
 ---
 
 ## Análise – IPECE 2023 – Analista de Políticas Públicas (TI)
