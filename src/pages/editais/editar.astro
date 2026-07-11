@@ -480,33 +480,34 @@ import Base from '../../layouts/Base.astro';
 </script>
 
 <style>
-  .loading-state { text-align: center; padding: 3rem; color: #6b7280; }
+  .loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
 
-  .config-panel { max-width: 700px; margin: 2rem auto; }
+  .config-panel { max-width: 900px; margin: 2rem auto; }
   .config-card {
     background: #fffbeb;
     border: 1px solid #f59e0b;
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 1.5rem;
   }
-  .config-card a { color: #2563eb; }
+  .config-card a { color: var(--primary-light); text-decoration: underline; }
 
   .editor-info { margin-bottom: 1.5rem; max-width: 900px; margin-left: auto; margin-right: auto; }
 
   .editor-form { max-width: 900px; margin: 0 auto; }
 
   .form-section {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    background: #fff;
+    box-shadow: var(--shadow);
   }
   .form-section legend {
     font-weight: 700;
     font-size: 1.1rem;
-    padding: 0 0.5rem;
-    color: #1e293b;
+    padding: 0 0.75rem;
+    color: var(--primary);
   }
 
   .fields-grid {
@@ -517,23 +518,31 @@ import Base from '../../layouts/Base.astro';
   }
 
   .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
-  .form-group label { font-weight: 600; font-size: 0.85rem; color: #6b7280; }
-  .form-group input, .form-group select {
-    padding: 0.6rem 0.8rem;
-    border: 1px solid #e2e8f0;
+  .form-group label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .form-group input,
+  .form-group select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.95rem;
-    background: #fff;
-    color: #1e293b;
+    background: var(--card-bg);
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .form-group input:focus, .form-group select:focus {
+  .form-group input:focus,
+  .form-group select:focus {
     outline: none;
-    border-color: #4472c4;
-    box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.15);
   }
 
-  .form-group.missing label { color: #dc2626; font-weight: 700; }
-  .form-group.missing input, .form-group.missing select {
+  .form-group.missing label { color: var(--danger); font-weight: 700; }
+  .form-group.missing input,
+  .form-group.missing select {
     border-color: #f87171;
     background: #fef2f2;
   }
@@ -549,9 +558,9 @@ import Base from '../../layouts/Base.astro';
 
   .status-container {
     margin-top: 1.5rem;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
