@@ -378,10 +378,32 @@ import Base from '../../layouts/Base.astro';
 
         if (parts.length === 2) {
           if (!updated[parts[0]]) updated[parts[0]] = {};
-          updated[parts[0]][parts[1]] = parsed;
+          // Preserve arrays/objects that aren't simple values
+          if (Array.isArray(updated[parts[0]][parts[1]]) && parsed === null) {
+            // Don't overwrite arrays with null
+          } else {
+            updated[parts[0]][parts[1]] = parsed;
+          }
         } else {
           updated[parts[0]] = parsed;
         }
+      }
+
+      // Ensure gratificacoes stays as array
+      if (updated.remuneracao && !Array.isArray(updated.remuneracao.gratificacoes)) {
+        updated.remuneracao.gratificacoes = originalData.remuneracao?.gratificacoes || [];
+      }
+      // Ensure fontes stays as array
+      if (!Array.isArray(updated.fontes)) {
+        updated.fontes = originalData.fontes || [];
+      }
+      // Ensure dados_faltantes stays as array until recalculated
+      if (!Array.isArray(updated.dados_faltantes)) {
+        updated.dados_faltantes = [];
+      }
+      // Preserve notas from original (not editable in form)
+      if (originalData.notas) {
+        updated.notas = originalData.notas;
       }
 
       // Recalculate dados_faltantes

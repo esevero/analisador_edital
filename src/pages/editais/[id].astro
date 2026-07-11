@@ -84,7 +84,7 @@ const venc = edital.remuneracao?.vencimento_base;
   </section>
 
   <!-- Gratificacoes -->
-  {edital.remuneracao?.gratificacoes?.length > 0 && (
+  {Array.isArray(edital.remuneracao?.gratificacoes) && edital.remuneracao.gratificacoes.length > 0 && (
     <section class="section-block">
       <h2>Gratificacoes</h2>
       <table class="editais-table">

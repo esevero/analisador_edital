@@ -55,7 +55,7 @@ editais.sort((a, b) =>
                     : '—'}
                 </td>
                 <td>
-                  {ed.remuneracao?.gratificacoes?.map(g => (
+                  {Array.isArray(ed.remuneracao?.gratificacoes) && ed.remuneracao.gratificacoes.map(g => (
                     <span class="grat-badge">
                       {g.nome}: R$ {(g.valor_inicial || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                     </span>
