@@ -178,13 +178,32 @@ import Base from '../../layouts/Base.astro';
     const resp = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
     if (!resp.ok) throw new Error('Edital nao encontrado no repositorio');
     const data = await resp.json();
-    const content = atob(data.content);
+    const content = decodeBase64UTF8(data.content);
     // Parse YAML front-matter
     const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
     if (!match) throw new Error('Formato do arquivo invalido');
-    // Simple YAML parse using jsyaml loaded from CDN? No, let's parse manually
     const fm = parseSimpleYaml(match[1]);
     return { frontmatter: fm, body: match[2], sha: data.sha };
+  }
+
+  // Decode base64 preserving UTF-8 characters (acentos, cedilha, etc.)
+  function decodeBase64UTF8(base64) {
+    const binStr = atob(base64.replace(/\n/g, ''));
+    const bytes = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) {
+      bytes[i] = binStr.charCodeAt(i);
+    }
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  // Encode string to base64 preserving UTF-8
+  function encodeBase64UTF8(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binStr = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binStr += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binStr);
   }
 
   function parseSimpleYaml(yamlStr) {
@@ -402,7 +421,7 @@ import Base from '../../layouts/Base.astro';
         },
         body: JSON.stringify({
           message: `Editar edital: ${editalId}`,
-          content: btoa(unescape(encodeURIComponent(newContent))),
+          content: encodeBase64UTF8(newContent),
           sha: fileSha,
           branch: REPO_CONFIG.branch,
         }),
@@ -467,11 +486,8 @@ import Base from '../../layouts/Base.astro';
     if (typeof v === 'number') return String(v);
     if (typeof v === 'string') {
       if (v === '') return '""';
-      if (v.includes(':') || v.includes('#') || v.includes('"') || v.includes("'")
-        || v.startsWith(' ') || v.endsWith(' ') || /^[\d.]+$/.test(v)) {
-        return `"${v.replace(/"/g, '\\"')}"`;
-      }
-      return `"${v}"`;
+      // Always quote strings to preserve encoding and special chars
+      return `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
     }
     return String(v);
   }
