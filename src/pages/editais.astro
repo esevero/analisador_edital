@@ -66,6 +66,7 @@ const editais = editaisFiles
               <td><span class={`badge badge-${ed.status}`}>{ed.status}</span></td>
               <td>
                 <a href={`${import.meta.env.BASE_URL}editais/${ed.id}/`} class="btn btn-sm">Ver</a>
+                <button class="btn btn-sm btn-delete" data-id={ed.id} data-arquivo={ed.edital_arquivo || ''}>Excluir</button>
               </td>
             </tr>
           ))}
@@ -89,4 +90,90 @@ const editais = editaisFiles
       tr.style.display = (matchStatus && matchRegime) ? '' : 'none';
     });
   }
+
+  // ─── EXCLUSAO ───
+  const REPO_CONFIG = {
+    owner: 'esevero',
+    repo: 'analisador_edital',
+    branch: 'main',
+  };
+
+  function getToken() {
+    return localStorage.getItem('gh_pat') || '';
+  }
+
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const token = getToken();
+      if (!token) {
+        alert('Configure o token primeiro na pagina "Adicionar".');
+        return;
+      }
+
+      const id = btn.dataset.id;
+      const arquivo = btn.dataset.arquivo;
+
+      if (!confirm(`Excluir edital "${id}"?\nEssa acao nao pode ser desfeita.`)) return;
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      try {
+        await deleteFile(`content/editais/${id}.md`, token);
+        if (arquivo) {
+          try { await deleteFile(`editais/${arquivo}`, token); } catch {}
+        }
+        btn.closest('tr').remove();
+        // Atualizar contador
+        const count = document.querySelectorAll('tbody tr').length;
+        document.querySelector('.page-header p').textContent = `${count} edital(is) no sistema`;
+      } catch (err) {
+        alert(`Erro ao excluir: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Excluir';
+      }
+    });
+  });
+
+  async function deleteFile(path, token) {
+    const url = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${path}`;
+    const getResp = await fetch(url, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (!getResp.ok) throw new Error(`Arquivo nao encontrado: ${path}`);
+    const fileData = await getResp.json();
+
+    const delResp = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `Excluir edital: ${path}`,
+        sha: fileData.sha,
+        branch: REPO_CONFIG.branch,
+      }),
+    });
+    if (!delResp.ok) {
+      const err = await delResp.json();
+      throw new Error(err.message || `Falha ao deletar ${path}`);
+    }
+  }
 </script>
+
+<style>
+  .btn-delete {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.3rem;
+  }
+  .btn-delete:hover { background: #b91c1c; }
+  .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>

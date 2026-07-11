@@ -9,7 +9,7 @@ import Base from '../layouts/Base.astro';
   </section>
 
   <!-- Painel de configuracao (aparece se nao tiver token salvo) -->
-  <div id="configPanel" class="config-panel" style="display:none;">
+  <div id="configPanel" class="config-panel">
     <div class="config-card">
       <h3>Configuracao do GitHub</h3>
       <p>Informe seu token de acesso para conectar ao repositorio. O token fica salvo apenas no seu navegador (localStorage).</p>
@@ -118,10 +118,12 @@ import Base from '../layouts/Base.astro';
       connStatus.style.display = 'flex';
       connUser.textContent = REPO_CONFIG.owner;
       uploadForm.style.display = 'flex';
+      document.getElementById('btnSubmit').disabled = false;
     } else {
       configPanel.style.display = 'block';
       connStatus.style.display = 'none';
-      uploadForm.style.display = 'none';
+      uploadForm.style.display = 'flex';
+      document.getElementById('btnSubmit').disabled = true;
     }
   }
 
