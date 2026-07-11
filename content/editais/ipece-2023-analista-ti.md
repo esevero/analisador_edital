@@ -29,7 +29,7 @@ remuneracao:
   teto_remuneratorio: 34000
 beneficios:
   aux_alimentacao: 800
-  aux_refeicao: 0
+  aux_refeicao: 1200
   aux_saude: null
   plano_saude: null
   plano_odonto: ""
