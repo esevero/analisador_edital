@@ -1,6 +1,6 @@
 ---
 id: "ipece-2023-analista-ti"
-status: "parcial"
+status: "completo"
 peso: 5
 data_processamento: "10/07/2026"
 edital_arquivo: "edital-ipece-instituto-avalia.pdf"
@@ -18,12 +18,12 @@ area: "Tecnologia da Informação"
 escolaridade: "Nível Superior"
 formacao_exigida: null
 vagas_total: null
-regime: null
+regime: "CLT"
 jornada_semanal: "40 horas semanais"
 local_trabalho: "Sede IPECE – Fortaleza"
 remuneracao:
   vencimento_base: 5428.69
-  gratificacoes: ""
+  gratificacoes: []
   remuneracao_total_inicial: 16884.27
   remuneracao_total_maxima: 20651.42
   teto_remuneratorio: 34000
@@ -86,9 +86,7 @@ fontes:
     descricao: "Dados do edital – Instituto Avalia / IPECE"
     link: "https://www.ipece.ce.gov.br"
     data: "10/07/2026"
-dados_faltantes:
-  - campo: "regime"
-    descricao: "Regime juridico"
+dados_faltantes: []
 ---
 
 ## Análise – IPECE 2023 – Analista de Políticas Públicas (TI)
