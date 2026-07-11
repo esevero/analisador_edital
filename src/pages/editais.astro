@@ -64,8 +64,9 @@ const editais = editaisFiles
               </td>
               <td>{ed.regime || '?'}</td>
               <td><span class={`badge badge-${ed.status}`}>{ed.status}</span></td>
-              <td>
+              <td class="actions-cell">
                 <a href={`${import.meta.env.BASE_URL}editais/${ed.id}/`} class="btn btn-sm">Ver</a>
+                <a href={`${import.meta.env.BASE_URL}editais/editar/?id=${ed.id}`} class="btn btn-sm btn-edit">Editar</a>
                 <button class="btn btn-sm btn-delete" data-id={ed.id} data-arquivo={ed.edital_arquivo || ''}>Excluir</button>
               </td>
             </tr>
@@ -163,6 +164,27 @@ const editais = editaisFiles
 </script>
 
 <style>
+  .actions-cell {
+    display: flex;
+    flex-direction: row;
+    gap: 0.3rem;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .btn-edit {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .btn-edit:hover { background: #1d4ed8; }
+
   .btn-delete {
     background: #dc2626;
     color: white;
@@ -172,7 +194,7 @@ const editais = editaisFiles
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: 600;
-    margin-left: 0.3rem;
+    margin-left: 0;
   }
   .btn-delete:hover { background: #b91c1c; }
   .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }

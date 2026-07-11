@@ -255,6 +255,7 @@ const venc = edital.remuneracao?.vencimento_base;
   <!-- Acoes -->
   <section class="actions-section">
     <a href={`${import.meta.env.BASE_URL}editais/`} class="btn">Voltar para Editais</a>
+    <a href={`${import.meta.env.BASE_URL}editais/editar/?id=${edital.id}`} class="btn btn-edit">Editar / Completar Dados</a>
     <button id="btnDelete" class="btn btn-danger" data-id={edital.id} data-arquivo={edital.edital_arquivo || ''}>
       Excluir Edital
     </button>
@@ -453,6 +454,19 @@ const venc = edital.remuneracao?.vencimento_base;
   }
   .btn-danger:hover { background: #b91c1c; }
   .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .btn-edit {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .btn-edit:hover { background: #1d4ed8; }
 
   .modal {
     position: fixed;

@@ -1,0 +1,555 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Editar Edital">
+  <section class="page-header">
+    <h1>Editar Edital</h1>
+    <p id="editalSubtitle">Carregando...</p>
+  </section>
+
+  <div id="loadingState" class="loading-state">
+    <p>Carregando dados do edital...</p>
+  </div>
+
+  <div id="noToken" class="config-panel" style="display:none;">
+    <div class="config-card">
+      <h3>Token necessario</h3>
+      <p>Configure o token na pagina <a href={`${import.meta.env.BASE_URL}adicionar/`}>Adicionar</a> primeiro.</p>
+    </div>
+  </div>
+
+  <div id="editorContainer" style="display:none;">
+    <div class="editor-info">
+      <span class="badge badge-parcial" id="badgeFaltantes" style="display:none;">Campos faltantes destacados</span>
+    </div>
+
+    <form id="editalForm" class="editor-form">
+      <!-- Sections will be injected by JS -->
+      <div id="formSections"></div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg" id="btnSave">Salvar Alteracoes</button>
+        <a id="btnVoltar" href="#" class="btn">Voltar</a>
+      </div>
+    </form>
+
+    <div id="saveStatus" class="status-container" style="display:none;">
+      <div id="saveStatusContent"></div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const REPO_CONFIG = {
+    owner: 'esevero',
+    repo: 'analisador_edital',
+    branch: 'main',
+  };
+
+  function getToken() { return localStorage.getItem('gh_pat') || ''; }
+
+  // Get edital ID from URL query param
+  const params = new URLSearchParams(window.location.search);
+  const editalId = params.get('id');
+
+  const loadingState = document.getElementById('loadingState');
+  const noToken = document.getElementById('noToken');
+  const editorContainer = document.getElementById('editorContainer');
+  const formSections = document.getElementById('formSections');
+  const subtitle = document.getElementById('editalSubtitle');
+  const btnVoltar = document.getElementById('btnVoltar');
+  const badgeFaltantes = document.getElementById('badgeFaltantes');
+
+  const BASE_URL = document.querySelector('meta[name="base-url"]')?.content
+    || window.location.pathname.replace(/editais\/editar\/?$/, '');
+
+  btnVoltar.href = `${BASE_URL}editais/${editalId}/`;
+
+  // Field definitions grouped by section
+  const SECTIONS = [
+    { title: 'Identificacao', fields: [
+      { key: 'orgao', label: 'Orgao', type: 'text' },
+      { key: 'sigla', label: 'Sigla', type: 'text' },
+      { key: 'banca', label: 'Banca', type: 'text' },
+      { key: 'esfera', label: 'Esfera', type: 'select', options: ['', 'Federal', 'Estadual', 'Municipal', 'Empresa Publica'] },
+      { key: 'estado', label: 'Estado (UF)', type: 'text' },
+      { key: 'cidade', label: 'Cidade', type: 'text' },
+      { key: 'edital_numero', label: 'Numero do Edital', type: 'text' },
+      { key: 'edital_ano', label: 'Ano', type: 'number' },
+      { key: 'edital_link', label: 'Link do Edital', type: 'text' },
+    ]},
+    { title: 'Cargo', fields: [
+      { key: 'cargo', label: 'Cargo', type: 'text' },
+      { key: 'area', label: 'Area', type: 'text' },
+      { key: 'escolaridade', label: 'Escolaridade', type: 'text' },
+      { key: 'formacao_exigida', label: 'Formacao Exigida', type: 'text' },
+      { key: 'vagas_total', label: 'Vagas Total', type: 'number' },
+      { key: 'regime', label: 'Regime', type: 'select', options: ['', 'Estatutario', 'CLT', 'Emprego Publico'] },
+      { key: 'jornada_semanal', label: 'Jornada Semanal', type: 'text' },
+      { key: 'local_trabalho', label: 'Local de Trabalho', type: 'text' },
+    ]},
+    { title: 'Remuneracao', prefix: 'remuneracao', fields: [
+      { key: 'vencimento_base', label: 'Vencimento Base (R$)', type: 'number', step: '0.01' },
+      { key: 'remuneracao_total_inicial', label: 'Remuneracao Total Inicial (R$)', type: 'number', step: '0.01' },
+      { key: 'remuneracao_total_maxima', label: 'Remuneracao Total Maxima (R$)', type: 'number', step: '0.01' },
+      { key: 'teto_remuneratorio', label: 'Teto Remuneratorio (R$)', type: 'number', step: '0.01' },
+    ]},
+    { title: 'Beneficios', prefix: 'beneficios', fields: [
+      { key: 'aux_alimentacao', label: 'Aux. Alimentacao (R$)', type: 'number', step: '0.01' },
+      { key: 'aux_refeicao', label: 'Aux. Refeicao (R$)', type: 'number', step: '0.01' },
+      { key: 'aux_saude', label: 'Aux. Saude (R$)', type: 'number', step: '0.01' },
+      { key: 'aux_creche', label: 'Aux. Creche (R$)', type: 'number', step: '0.01' },
+      { key: 'plano_saude', label: 'Plano de Saude', type: 'text' },
+      { key: 'aux_transporte', label: 'Transporte', type: 'text' },
+      { key: 'previdencia_complementar', label: 'Previdencia Complementar', type: 'text' },
+      { key: 'outros', label: 'Outros', type: 'text' },
+    ]},
+    { title: 'Titulacao', prefix: 'titulacao', fields: [
+      { key: 'especializacao_percentual', label: 'Especializacao (%)', type: 'number', step: '0.1' },
+      { key: 'especializacao_valor', label: 'Especializacao Valor (R$)', type: 'number', step: '0.01' },
+      { key: 'mestrado_percentual', label: 'Mestrado (%)', type: 'number', step: '0.1' },
+      { key: 'mestrado_valor', label: 'Mestrado Valor (R$)', type: 'number', step: '0.01' },
+      { key: 'doutorado_percentual', label: 'Doutorado (%)', type: 'number', step: '0.1' },
+      { key: 'doutorado_valor', label: 'Doutorado Valor (R$)', type: 'number', step: '0.01' },
+      { key: 'base_calculo', label: 'Base de Calculo', type: 'text' },
+      { key: 'observacoes', label: 'Observacoes', type: 'text' },
+    ]},
+    { title: 'Carreira', prefix: 'carreira', fields: [
+      { key: 'plano_nome', label: 'Plano de Carreira', type: 'text' },
+      { key: 'classes', label: 'Classes', type: 'text' },
+      { key: 'niveis', label: 'Niveis', type: 'number' },
+      { key: 'progressao_horizontal', label: 'Progressao Horizontal', type: 'text' },
+      { key: 'progressao_vertical', label: 'Progressao Vertical', type: 'text' },
+      { key: 'tempo_minimo_progressao', label: 'Tempo Min. Progressao', type: 'text' },
+    ]},
+    { title: 'Trabalho', prefix: 'trabalho', fields: [
+      { key: 'home_office', label: 'Home Office', type: 'select', options: ['', 'Sim', 'Nao', 'Parcial'] },
+      { key: 'dias_remotos', label: 'Dias Remotos', type: 'text' },
+      { key: 'flexibilidade_horario', label: 'Flexibilidade', type: 'text' },
+      { key: 'banco_horas', label: 'Banco de Horas', type: 'select', options: ['', 'Sim', 'Nao'] },
+      { key: 'plantao_sobreaviso', label: 'Plantao/Sobreaviso', type: 'text' },
+    ]},
+    { title: 'Notas (0-10)', prefix: 'notas', fields: [
+      { key: 'remuneracao', label: 'Remuneracao', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'beneficios', label: 'Beneficios', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'crescimento', label: 'Crescimento', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'qualidade_vida', label: 'Qualidade de Vida', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'flexibilidade', label: 'Flexibilidade', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'estabilidade', label: 'Estabilidade', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'valorizacao_ti', label: 'Valorizacao TI', type: 'number', step: '0.5', min: 0, max: 10 },
+      { key: 'localizacao', label: 'Localizacao', type: 'number', step: '0.5', min: 0, max: 10 },
+    ]},
+  ];
+
+  let originalData = {};
+  let originalContent = '';
+  let fileSha = '';
+  let faltantes = [];
+
+  async function init() {
+    const token = getToken();
+    if (!token) {
+      loadingState.style.display = 'none';
+      noToken.style.display = 'block';
+      return;
+    }
+    if (!editalId) {
+      loadingState.innerHTML = '<p style="color:red;">ID do edital nao informado na URL.</p>';
+      return;
+    }
+
+    try {
+      const fileData = await fetchEditalFile(token);
+      originalData = fileData.frontmatter;
+      originalContent = fileData.body;
+      fileSha = fileData.sha;
+      faltantes = (originalData.dados_faltantes || []).map(d => d.campo);
+
+      subtitle.textContent = `${originalData.sigla || originalData.orgao || ''} - ${originalData.cargo || editalId}`;
+      if (faltantes.length > 0) {
+        badgeFaltantes.style.display = 'inline-block';
+        badgeFaltantes.textContent = `${faltantes.length} campo(s) faltante(s)`;
+      }
+
+      renderForm();
+      loadingState.style.display = 'none';
+      editorContainer.style.display = 'block';
+    } catch (err) {
+      loadingState.innerHTML = `<p style="color:red;">Erro: ${err.message}</p>`;
+    }
+  }
+
+  async function fetchEditalFile(token) {
+    const url = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/content/editais/${editalId}.md`;
+    const resp = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+    if (!resp.ok) throw new Error('Edital nao encontrado no repositorio');
+    const data = await resp.json();
+    const content = atob(data.content);
+    // Parse YAML front-matter
+    const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!match) throw new Error('Formato do arquivo invalido');
+    // Simple YAML parse using jsyaml loaded from CDN? No, let's parse manually
+    const fm = parseSimpleYaml(match[1]);
+    return { frontmatter: fm, body: match[2], sha: data.sha };
+  }
+
+  function parseSimpleYaml(yamlStr) {
+    // Use a simple approach: eval via JSON conversion won't work for YAML
+    // Instead, fetch and parse properly
+    // For now, we'll use a line-by-line parser for flat + one-level nested
+    const data = {};
+    let currentObj = null;
+    let currentKey = null;
+    let inList = false;
+    let listItems = [];
+
+    const lines = yamlStr.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === '' || line.trim().startsWith('#')) continue;
+
+      const indentMatch = line.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1].length : 0;
+
+      if (indent === 0) {
+        // Save previous list
+        if (inList && currentKey) {
+          data[currentKey] = listItems;
+          inList = false;
+          listItems = [];
+        }
+        if (currentObj && currentKey) {
+          data[currentKey] = currentObj;
+          currentObj = null;
+        }
+
+        const m = line.match(/^(\w[\w_]*)\s*:\s*(.*)$/);
+        if (m) {
+          currentKey = m[1];
+          const val = m[2].trim();
+          if (val === '' || val === '[]' || val === '{}') {
+            // Could be start of nested object or empty
+            if (val === '[]') { data[currentKey] = []; currentKey = null; }
+            else if (val === '{}') { data[currentKey] = {}; currentKey = null; }
+            // else wait for next lines
+          } else {
+            data[currentKey] = parseVal(val);
+            currentKey = null;
+          }
+        }
+      } else if (indent >= 2 && currentKey) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('- ')) {
+          // List item
+          if (!inList) { inList = true; listItems = []; }
+          // Could be "- nome: value" (object list) or "- value"
+          const objMatch = trimmed.match(/^-\s+(\w[\w_]*)\s*:\s*(.*)$/);
+          if (objMatch) {
+            // Start of list object
+            const obj = {};
+            obj[objMatch[1]] = parseVal(objMatch[2]);
+            // Read subsequent indented lines for this object
+            while (i + 1 < lines.length) {
+              const nextLine = lines[i + 1];
+              const nextIndent = (nextLine.match(/^(\s*)/) || ['',''])[1].length;
+              if (nextIndent >= 4 && !nextLine.trim().startsWith('-')) {
+                i++;
+                const kv = nextLine.trim().match(/^(\w[\w_]*)\s*:\s*(.*)$/);
+                if (kv) obj[kv[1]] = parseVal(kv[2]);
+              } else break;
+            }
+            listItems.push(obj);
+          } else {
+            listItems.push(parseVal(trimmed.substring(2)));
+          }
+        } else {
+          // Nested object property
+          if (inList && currentKey) {
+            data[currentKey] = listItems;
+            inList = false;
+            listItems = [];
+          }
+          if (!currentObj) currentObj = {};
+          const kv = trimmed.match(/^(\w[\w_]*)\s*:\s*(.*)$/);
+          if (kv) currentObj[kv[1]] = parseVal(kv[2]);
+        }
+      }
+    }
+    // Flush remaining
+    if (inList && currentKey) data[currentKey] = listItems;
+    else if (currentObj && currentKey) data[currentKey] = currentObj;
+
+    return data;
+  }
+
+  function parseVal(str) {
+    if (str === 'null' || str === '~') return null;
+    if (str === 'true') return true;
+    if (str === 'false') return false;
+    if (str === '[]') return [];
+    if (str === '{}') return {};
+    // Remove quotes
+    if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+      return str.slice(1, -1);
+    }
+    // Number
+    const num = Number(str);
+    if (!isNaN(num) && str !== '') return num;
+    return str;
+  }
+
+  function renderForm() {
+    let html = '';
+    for (const section of SECTIONS) {
+      html += `<fieldset class="form-section"><legend>${section.title}</legend><div class="fields-grid">`;
+      for (const field of section.fields) {
+        const fullKey = section.prefix ? `${section.prefix}.${field.key}` : field.key;
+        let value = section.prefix
+          ? (originalData[section.prefix]?.[field.key] ?? '')
+          : (originalData[field.key] ?? '');
+        if (value === null) value = '';
+        const isMissing = faltantes.includes(fullKey);
+        const cls = isMissing ? 'form-group missing' : 'form-group';
+
+        html += `<div class="${cls}">`;
+        html += `<label for="f_${fullKey}">${field.label}${isMissing ? ' *' : ''}</label>`;
+
+        if (field.type === 'select') {
+          html += `<select id="f_${fullKey}" name="${fullKey}">`;
+          for (const opt of field.options) {
+            const sel = (String(value).toLowerCase() === opt.toLowerCase()) ? 'selected' : '';
+            html += `<option value="${opt}" ${sel}>${opt || '-- Selecione --'}</option>`;
+          }
+          html += `</select>`;
+        } else {
+          const attrs = [];
+          if (field.step) attrs.push(`step="${field.step}"`);
+          if (field.min !== undefined) attrs.push(`min="${field.min}"`);
+          if (field.max !== undefined) attrs.push(`max="${field.max}"`);
+          html += `<input type="${field.type}" id="f_${fullKey}" name="${fullKey}" value="${value}" ${attrs.join(' ')} />`;
+        }
+        html += `</div>`;
+      }
+      html += `</div></fieldset>`;
+    }
+    formSections.innerHTML = html;
+  }
+
+  // Save
+  document.getElementById('editalForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = getToken();
+    const btnSave = document.getElementById('btnSave');
+    const saveStatus = document.getElementById('saveStatus');
+    const saveStatusContent = document.getElementById('saveStatusContent');
+
+    btnSave.disabled = true;
+    btnSave.textContent = 'Salvando...';
+
+    try {
+      // Collect form data
+      const formData = new FormData(e.target);
+      const updated = JSON.parse(JSON.stringify(originalData));
+
+      for (const [key, val] of formData.entries()) {
+        const parts = key.split('.');
+        let parsed = val.trim();
+        // Convert numbers
+        if (parsed !== '' && !isNaN(Number(parsed))) parsed = Number(parsed);
+        else if (parsed === '') parsed = null;
+
+        if (parts.length === 2) {
+          if (!updated[parts[0]]) updated[parts[0]] = {};
+          updated[parts[0]][parts[1]] = parsed;
+        } else {
+          updated[parts[0]] = parsed;
+        }
+      }
+
+      // Recalculate dados_faltantes
+      const OBRIGATORIOS = [
+        ['orgao', 'Nome completo do orgao'],
+        ['sigla', 'Sigla do orgao'],
+        ['banca', 'Banca organizadora'],
+        ['regime', 'Regime juridico'],
+        ['jornada_semanal', 'Jornada semanal'],
+        ['remuneracao.vencimento_base', 'Vencimento base inicial (R$)'],
+        ['remuneracao.remuneracao_total_inicial', 'Remuneracao total inicial (R$)'],
+        ['beneficios.aux_alimentacao', 'Auxilio alimentacao (R$/mes)'],
+      ];
+      const novosFaltantes = [];
+      for (const [campo, desc] of OBRIGATORIOS) {
+        const parts = campo.split('.');
+        let v = parts.length === 2 ? updated[parts[0]]?.[parts[1]] : updated[parts[0]];
+        if (v === null || v === '' || v === 0 || v === undefined) {
+          novosFaltantes.push({ campo, descricao: desc });
+        }
+      }
+      updated.dados_faltantes = novosFaltantes;
+      updated.status = novosFaltantes.length === 0 ? 'completo' : 'parcial';
+
+      // Build YAML (simple serializer)
+      const yaml = buildYaml(updated);
+      const newContent = `---\n${yaml}---\n${originalContent}`;
+
+      // Push to GitHub
+      const path = `content/editais/${editalId}.md`;
+      const url = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${path}`;
+      const resp = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Editar edital: ${editalId}`,
+          content: btoa(unescape(encodeURIComponent(newContent))),
+          sha: fileSha,
+          branch: REPO_CONFIG.branch,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.message || 'Falha ao salvar');
+      }
+
+      saveStatus.style.display = 'block';
+      saveStatus.className = 'status-container status-success';
+      saveStatusContent.innerHTML = '<strong>Salvo com sucesso!</strong> O site sera atualizado em breve.';
+    } catch (err) {
+      saveStatus.style.display = 'block';
+      saveStatus.className = 'status-container status-error';
+      saveStatusContent.innerHTML = `Erro: ${err.message}`;
+    } finally {
+      btnSave.disabled = false;
+      btnSave.textContent = 'Salvar Alteracoes';
+    }
+  });
+
+  function buildYaml(obj, indent = 0) {
+    let out = '';
+    const pad = '  '.repeat(indent);
+    for (const [key, val] of Object.entries(obj)) {
+      if (val === null || val === undefined) {
+        out += `${pad}${key}: null\n`;
+      } else if (Array.isArray(val)) {
+        if (val.length === 0) {
+          out += `${pad}${key}: []\n`;
+        } else {
+          out += `${pad}${key}:\n`;
+          for (const item of val) {
+            if (typeof item === 'object' && item !== null) {
+              const entries = Object.entries(item);
+              if (entries.length > 0) {
+                out += `${pad}  - ${entries[0][0]}: ${yamlVal(entries[0][1])}\n`;
+                for (let i = 1; i < entries.length; i++) {
+                  out += `${pad}    ${entries[i][0]}: ${yamlVal(entries[i][1])}\n`;
+                }
+              }
+            } else {
+              out += `${pad}  - ${yamlVal(item)}\n`;
+            }
+          }
+        }
+      } else if (typeof val === 'object') {
+        out += `${pad}${key}:\n`;
+        out += buildYaml(val, indent + 1);
+      } else {
+        out += `${pad}${key}: ${yamlVal(val)}\n`;
+      }
+    }
+    return out;
+  }
+
+  function yamlVal(v) {
+    if (v === null || v === undefined) return 'null';
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    if (typeof v === 'number') return String(v);
+    if (typeof v === 'string') {
+      if (v === '') return '""';
+      if (v.includes(':') || v.includes('#') || v.includes('"') || v.includes("'")
+        || v.startsWith(' ') || v.endsWith(' ') || /^[\d.]+$/.test(v)) {
+        return `"${v.replace(/"/g, '\\"')}"`;
+      }
+      return `"${v}"`;
+    }
+    return String(v);
+  }
+
+  init();
+</script>
+
+<style>
+  .loading-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+
+  .config-panel { max-width: 700px; margin: 2rem auto; }
+  .config-card {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  .editor-info { margin-bottom: 1.5rem; }
+
+  .editor-form { max-width: 900px; margin: 0 auto; }
+
+  .form-section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-section legend {
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0 0.5rem;
+  }
+
+  .fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+  .form-group label { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
+  .form-group input, .form-group select {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
+  }
+
+  .form-group.missing label { color: #dc2626; font-weight: 700; }
+  .form-group.missing input, .form-group.missing select {
+    border-color: #f87171;
+    background: #fef2f2;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    align-items: center;
+  }
+
+  .btn-lg { padding: 0.8rem 2rem; font-size: 1rem; }
+
+  .status-container {
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .status-success { background: #f0fdf4; border-color: #86efac; }
+  .status-error { background: #fef2f2; border-color: #fecaca; }
+</style>
