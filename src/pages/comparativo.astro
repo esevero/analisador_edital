@@ -1,162 +1,154 @@
 ---
 import Base from '../layouts/Base.astro';
-
-const editaisFiles = await Astro.glob('../../content/editais/*.md');
-const editais = editaisFiles
-  .filter(e => !e.file.includes('_schema'))
-  .map(e => e.frontmatter)
-  .filter(e => e.id && e.remuneracao?.remuneracao_total_inicial);
-
-// Ordenar por remuneração total
-editais.sort((a, b) => 
-  (b.remuneracao?.remuneracao_total_inicial || 0) - (a.remuneracao?.remuneracao_total_inicial || 0)
-);
 ---
 
 <Base title="Comparativo">
   <section class="page-header">
-    <h1>📊 Comparativo de Editais</h1>
-    <p>Comparação lado a lado de todos os concursos analisados</p>
+    <h1>Comparativo de Editais</h1>
+    <p>Comparacao lado a lado de todos os concursos analisados</p>
   </section>
 
-  {editais.length === 0 ? (
-    <div class="empty-state">
-      <p>Nenhum edital com dados completos de remuneração.</p>
-      <a href={`${import.meta.env.BASE_URL}adicionar/`} class="btn btn-primary">Adicionar Edital</a>
+  <div id="loadingState" class="loading-state">
+    <p>Carregando editais...</p>
+  </div>
+
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <p>Nenhum edital com dados completos de remuneracao.</p>
+    <a href={`${import.meta.env.BASE_URL}adicionar/`} class="btn btn-primary">Adicionar Edital</a>
+  </div>
+
+  <div id="contentArea" style="display:none;">
+    <div class="table-responsive">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Orgao / Cargo</th>
+            <th>Regime</th>
+            <th>Venc. Base</th>
+            <th>Gratificacao</th>
+            <th>Total Inicial</th>
+            <th>Total Maximo</th>
+            <th>Aux. Alimentacao</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="compBody"></tbody>
+      </table>
     </div>
-  ) : (
-    <>
-      <!-- Tabela Comparativa Principal -->
-      <div class="table-responsive">
-        <table class="comparison-table">
-          <thead>
-            <tr>
-              <th>Órgão / Cargo</th>
-              <th>Regime</th>
-              <th>Venc. Base</th>
-              <th>Gratificação</th>
-              <th>Total Inicial</th>
-              <th>Total Máximo</th>
-              <th>Aux. Alimentação</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {editais.map((ed, i) => (
-              <tr class={i === 0 ? 'highlight-first' : ''}>
-                <td>
-                  <strong>{ed.sigla || ed.orgao}</strong><br/>
-                  <small>{ed.cargo}</small>
-                </td>
-                <td>{ed.regime || '?'}</td>
-                <td class="money">
-                  {ed.remuneracao?.vencimento_base 
-                    ? `R$ ${ed.remuneracao.vencimento_base.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
-                    : '—'}
-                </td>
-                <td>
-                  {Array.isArray(ed.remuneracao?.gratificacoes) && ed.remuneracao.gratificacoes.map(g => (
-                    <span class="grat-badge">
-                      {g.nome}: R$ {(g.valor_inicial || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    </span>
-                  ))}
-                </td>
-                <td class="money highlight">
-                  R$ {ed.remuneracao.remuneracao_total_inicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                </td>
-                <td class="money">
-                  {ed.remuneracao?.remuneracao_total_maxima
-                    ? `R$ ${ed.remuneracao.remuneracao_total_maxima.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
-                    : '—'}
-                </td>
-                <td class="money">
-                  {ed.beneficios?.aux_alimentacao
-                    ? `R$ ${ed.beneficios.aux_alimentacao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
-                    : '—'}
-                </td>
-                <td>
-                  <span class={`badge badge-${ed.status}`}>{ed.status}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
-      <!-- Gráfico de Remuneração -->
-      <section class="chart-section">
-        <h2>Gráfico de Remuneração Total Inicial</h2>
-        <canvas id="chartRemuneracao" height="300"></canvas>
-      </section>
+    <section class="chart-section">
+      <h2>Grafico de Remuneracao Total Inicial</h2>
+      <canvas id="chartRemuneracao" height="300"></canvas>
+    </section>
 
-      <!-- Gráfico de Benefícios -->
-      <section class="chart-section">
-        <h2>Auxílio Alimentação por Órgão</h2>
-        <canvas id="chartBeneficios" height="250"></canvas>
-      </section>
-
-      <script define:vars={{ editais }}>
-        // Gráfico de Remuneração
-        const ctx1 = document.getElementById('chartRemuneracao').getContext('2d');
-        new Chart(ctx1, {
-          type: 'bar',
-          data: {
-            labels: editais.map(e => e.sigla || e.orgao?.substring(0, 15)),
-            datasets: [
-              {
-                label: 'Remuneração Total Inicial (R$)',
-                data: editais.map(e => e.remuneracao?.remuneracao_total_inicial || 0),
-                backgroundColor: '#4472C4',
-                borderRadius: 6,
-              },
-              {
-                label: 'Remuneração Total Máxima (R$)',
-                data: editais.map(e => e.remuneracao?.remuneracao_total_maxima || 0),
-                backgroundColor: '#70AD47',
-                borderRadius: 6,
-              },
-            ]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'top' },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: (v) => 'R$ ' + v.toLocaleString('pt-BR')
-                }
-              }
-            }
-          }
-        });
-
-        // Gráfico de Benefícios
-        const ctx2 = document.getElementById('chartBeneficios').getContext('2d');
-        new Chart(ctx2, {
-          type: 'bar',
-          data: {
-            labels: editais.map(e => e.sigla || e.orgao?.substring(0, 15)),
-            datasets: [{
-              label: 'Auxílio Alimentação (R$/mês)',
-              data: editais.map(e => e.beneficios?.aux_alimentacao || 0),
-              backgroundColor: '#C55A11',
-              borderRadius: 6,
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { callback: (v) => 'R$ ' + v.toLocaleString('pt-BR') }
-              }
-            }
-          }
-        });
-      </script>
-    </>
-  )}
+    <section class="chart-section">
+      <h2>Auxilio Alimentacao por Orgao</h2>
+      <canvas id="chartBeneficios" height="250"></canvas>
+    </section>
+  </div>
 </Base>
+
+<script>
+  import { listEditais, formatMoney } from '../lib/github-api.js';
+
+  async function init() {
+    const loading = document.getElementById('loadingState');
+    const empty = document.getElementById('emptyState');
+    const content = document.getElementById('contentArea');
+
+    try {
+      const allEditais = await listEditais();
+      const editais = allEditais
+        .filter(e => e.remuneracao?.remuneracao_total_inicial)
+        .sort((a, b) => (b.remuneracao?.remuneracao_total_inicial || 0) - (a.remuneracao?.remuneracao_total_inicial || 0));
+
+      loading.style.display = 'none';
+
+      if (editais.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      content.style.display = 'block';
+      renderTable(editais);
+      renderCharts(editais);
+    } catch (err) {
+      loading.innerHTML = `<p style="color:var(--danger);">Erro: ${err.message}</p>`;
+    }
+  }
+
+  function renderTable(editais) {
+    const tbody = document.getElementById('compBody');
+    tbody.innerHTML = editais.map((ed, i) => {
+      const grats = Array.isArray(ed.remuneracao?.gratificacoes) ? ed.remuneracao.gratificacoes : [];
+      const gratBadges = grats.map(g => `<span class="grat-badge">${g.nome}: ${formatMoney(g.valor_inicial)}</span>`).join('');
+
+      return `
+        <tr class="${i === 0 ? 'highlight-first' : ''}">
+          <td><strong>${ed.sigla || ed.orgao || ''}</strong><br/><small>${ed.cargo || ''}</small></td>
+          <td>${ed.regime || '?'}</td>
+          <td class="money">${formatMoney(ed.remuneracao?.vencimento_base)}</td>
+          <td>${gratBadges || '—'}</td>
+          <td class="money highlight">${formatMoney(ed.remuneracao.remuneracao_total_inicial)}</td>
+          <td class="money">${formatMoney(ed.remuneracao?.remuneracao_total_maxima)}</td>
+          <td class="money">${formatMoney(ed.beneficios?.aux_alimentacao)}</td>
+          <td><span class="badge badge-${ed.status}">${ed.status || '?'}</span></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function renderCharts(editais) {
+    // Remuneracao chart
+    const ctx1 = document.getElementById('chartRemuneracao').getContext('2d');
+    new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: editais.map(e => e.sigla || (e.orgao || '').substring(0, 15)),
+        datasets: [
+          {
+            label: 'Remuneracao Total Inicial (R$)',
+            data: editais.map(e => e.remuneracao?.remuneracao_total_inicial || 0),
+            backgroundColor: '#4472C4',
+            borderRadius: 6,
+          },
+          {
+            label: 'Remuneracao Total Maxima (R$)',
+            data: editais.map(e => e.remuneracao?.remuneracao_total_maxima || 0),
+            backgroundColor: '#70AD47',
+            borderRadius: 6,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + v.toLocaleString('pt-BR') } }
+        }
+      }
+    });
+
+    // Beneficios chart
+    const ctx2 = document.getElementById('chartBeneficios').getContext('2d');
+    new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: editais.map(e => e.sigla || (e.orgao || '').substring(0, 15)),
+        datasets: [{
+          label: 'Auxilio Alimentacao (R$/mes)',
+          data: editais.map(e => e.beneficios?.aux_alimentacao || 0),
+          backgroundColor: '#C55A11',
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: (v) => 'R$ ' + v.toLocaleString('pt-BR') } }
+        }
+      }
+    });
+  }
+
+  init();
+</script>

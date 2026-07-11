@@ -1,75 +1,39 @@
 ---
 import Base from '../layouts/Base.astro';
-
-// Importar todos os editais do content
-const editaisFiles = await Astro.glob('../../content/editais/*.md');
-const editais = editaisFiles
-  .filter(e => !e.file.includes('_schema'))
-  .map(e => e.frontmatter)
-  .filter(e => e.id);
-const completos = editais.filter(e => e.status === 'completo').length;
-const parciais = editais.filter(e => e.status === 'parcial').length;
-const pendentes = editais.filter(e => e.status === 'pendente').length;
 ---
 
-<Base title="Início">
+<Base title="Inicio">
   <section class="hero">
-    <h1>📋 Analisador de Editais de Concursos</h1>
+    <h1>Analisador de Editais de Concursos</h1>
     <p class="subtitle">
-      Faça upload de um edital PDF, selecione o cargo e obtenha uma análise completa:
-      remuneração, gratificações, benefícios, carreira, titulação e muito mais.
+      Faca upload de um edital PDF, selecione o cargo e obtenha uma analise completa:
+      remuneracao, gratificacoes, beneficios, carreira, titulacao e muito mais.
     </p>
     <div class="stats-grid">
       <div class="stat-card">
-        <span class="stat-number">{editais.length}</span>
+        <span class="stat-number" id="statTotal">-</span>
         <span class="stat-label">Editais Analisados</span>
       </div>
       <div class="stat-card success">
-        <span class="stat-number">{completos}</span>
+        <span class="stat-number" id="statCompletos">-</span>
         <span class="stat-label">Completos</span>
       </div>
       <div class="stat-card warning">
-        <span class="stat-number">{parciais}</span>
+        <span class="stat-number" id="statParciais">-</span>
         <span class="stat-label">Parciais</span>
       </div>
       <div class="stat-card danger">
-        <span class="stat-number">{pendentes}</span>
+        <span class="stat-number" id="statPendentes">-</span>
         <span class="stat-label">Pendentes</span>
       </div>
     </div>
     <a href={`${import.meta.env.BASE_URL}adicionar/`} class="btn btn-primary">+ Adicionar Novo Edital</a>
   </section>
 
-  {editais.length > 0 && (
-    <section class="editais-lista">
-      <h2>Editais Recentes</h2>
-      <div class="cards-grid">
-        {editais.map(edital => (
-          <a href={`${import.meta.env.BASE_URL}editais/${edital.id}/`} class="card">
-            <div class="card-header">
-              <span class={`badge badge-${edital.status}`}>{edital.status}</span>
-              <span class="badge badge-banca">{edital.banca || '?'}</span>
-            </div>
-            <h3>{edital.sigla || edital.orgao}</h3>
-            <p class="cargo">{edital.cargo}</p>
-            <div class="card-footer">
-              <span class="remuneracao">
-                {edital.remuneracao?.remuneracao_total_inicial 
-                  ? `R$ ${edital.remuneracao.remuneracao_total_inicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
-                  : 'Remuneração: pendente'}
-              </span>
-              <span class="ano">{edital.edital_ano}</span>
-            </div>
-            {edital.dados_faltantes?.length > 0 && (
-              <div class="card-alert">
-                ⚠️ {edital.dados_faltantes.length} dados pendentes
-              </div>
-            )}
-          </a>
-        ))}
-      </div>
-    </section>
-  )}
+  <section class="editais-lista" id="editaisRecentes" style="display:none;">
+    <h2>Editais Recentes</h2>
+    <div class="cards-grid" id="cardsGrid"></div>
+  </section>
 
   <section class="como-funciona">
     <h2>Como Funciona</h2>
@@ -77,28 +41,86 @@ const pendentes = editais.filter(e => e.status === 'pendente').length;
       <div class="step">
         <span class="step-number">1</span>
         <h3>Upload do Edital</h3>
-        <p>Faça upload do PDF ou cole o link. O sistema extrai o texto automaticamente.</p>
+        <p>Faca upload do PDF. O sistema extrai o texto automaticamente.</p>
       </div>
       <div class="step">
         <span class="step-number">2</span>
         <h3>Selecione o Cargo</h3>
-        <p>O sistema identifica os cargos do edital. Escolha qual quer analisar.</p>
+        <p>Informe o cargo que deseja analisar no edital.</p>
       </div>
       <div class="step">
         <span class="step-number">3</span>
-        <h3>Extração Inteligente</h3>
-        <p>Remuneração, gratificações (GAM, GDAP, GDE...), benefícios, carreira e titulação são extraídos automaticamente.</p>
+        <h3>Extracao Inteligente</h3>
+        <p>Remuneracao, gratificacoes, beneficios, carreira e titulacao sao extraidos automaticamente.</p>
       </div>
       <div class="step">
         <span class="step-number">4</span>
         <h3>Complete os Dados</h3>
-        <p>O que não foi encontrado aparece em formulário para você preencher.</p>
+        <p>O que nao foi encontrado aparece para voce preencher.</p>
       </div>
       <div class="step">
         <span class="step-number">5</span>
-        <h3>Análise Completa</h3>
-        <p>Gráficos, comparativos, ranking e tabelas detalhadas de cada concurso.</p>
+        <h3>Analise Completa</h3>
+        <p>Graficos, comparativos, ranking e tabelas detalhadas de cada concurso.</p>
       </div>
     </div>
   </section>
 </Base>
+
+<script>
+  import { listEditais, formatMoney, getToken } from '../lib/github-api.js';
+
+  const BASE = '/analisador_edital/';
+
+  async function init() {
+    try {
+      const editais = await listEditais();
+
+      const completos = editais.filter(e => e.status === 'completo').length;
+      const parciais = editais.filter(e => e.status === 'parcial').length;
+      const pendentes = editais.filter(e => e.status === 'pendente').length;
+
+      document.getElementById('statTotal').textContent = editais.length;
+      document.getElementById('statCompletos').textContent = completos;
+      document.getElementById('statParciais').textContent = parciais;
+      document.getElementById('statPendentes').textContent = pendentes;
+
+      if (editais.length > 0) {
+        const section = document.getElementById('editaisRecentes');
+        section.style.display = 'block';
+
+        const grid = document.getElementById('cardsGrid');
+        const recentes = editais.slice(0, 6);
+        grid.innerHTML = recentes.map(ed => `
+          <a href="${BASE}editais/ver/?id=${ed.id}" class="card">
+            <div class="card-header">
+              <span class="badge badge-${ed.status}">${ed.status}</span>
+              <span class="badge badge-banca">${ed.banca || '?'}</span>
+            </div>
+            <h3>${ed.sigla || ed.orgao || ''}</h3>
+            <p class="cargo">${ed.cargo || ''}</p>
+            <div class="card-footer">
+              <span class="remuneracao">
+                ${ed.remuneracao?.remuneracao_total_inicial
+                  ? formatMoney(ed.remuneracao.remuneracao_total_inicial)
+                  : 'Remuneracao: pendente'}
+              </span>
+              <span class="ano">${ed.edital_ano || ''}</span>
+            </div>
+            ${(ed.dados_faltantes?.length > 0)
+              ? `<div class="card-alert">${ed.dados_faltantes.length} dados pendentes</div>`
+              : ''}
+          </a>
+        `).join('');
+      }
+    } catch (err) {
+      // Silently fail on index — show 0s
+      document.getElementById('statTotal').textContent = '0';
+      document.getElementById('statCompletos').textContent = '0';
+      document.getElementById('statParciais').textContent = '0';
+      document.getElementById('statPendentes').textContent = '0';
+    }
+  }
+
+  init();
+</script>

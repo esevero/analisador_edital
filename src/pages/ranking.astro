@@ -1,145 +1,165 @@
 ---
 import Base from '../layouts/Base.astro';
-
-const editaisFiles = await Astro.glob('../../content/editais/*.md');
-const editais = editaisFiles
-  .filter(e => !e.file.includes('_schema'))
-  .map(e => e.frontmatter)
-  .filter(e => e.id && e.notas);
-
-// Pesos do ranking
-const PESOS = {
-  remuneracao: 0.20,
-  beneficios: 0.15,
-  crescimento: 0.15,
-  qualidade_vida: 0.15,
-  flexibilidade: 0.10,
-  estabilidade: 0.10,
-  valorizacao_ti: 0.10,
-  localizacao: 0.05,
-};
-
-// Calcular nota ponderada
-const ranking = editais
-  .map(ed => {
-    const notas = ed.notas || {};
-    let pontuacao = 0;
-    let pesoTotal = 0;
-    for (const [criterio, peso] of Object.entries(PESOS)) {
-      const nota = notas[criterio];
-      if (nota != null && nota > 0) {
-        pontuacao += nota * peso;
-        pesoTotal += peso;
-      }
-    }
-    // Normalizar se nem todos os critérios foram preenchidos
-    const notaFinal = pesoTotal > 0 ? pontuacao / pesoTotal * (Object.values(PESOS).reduce((a,b) => a+b, 0)) : 0;
-    return { ...ed, notaFinal: Math.round(notaFinal * 100) / 100 };
-  })
-  .filter(e => e.notaFinal > 0)
-  .sort((a, b) => b.notaFinal - a.notaFinal);
-
-const medalhas = ['🥇', '🥈', '🥉'];
 ---
 
 <Base title="Ranking">
   <section class="page-header">
-    <h1>🏆 Ranking de Concursos</h1>
-    <p>Classificação ponderada por remuneração, benefícios, crescimento, qualidade de vida e mais</p>
+    <h1>Ranking de Concursos</h1>
+    <p>Classificacao ponderada por remuneracao, beneficios, crescimento, qualidade de vida e mais</p>
   </section>
 
-  <!-- Pesos -->
   <details class="pesos-section">
-    <summary>⚙️ Ver/Editar Pesos do Ranking</summary>
-    <div class="pesos-grid">
-      {Object.entries(PESOS).map(([criterio, peso]) => (
-        <div class="peso-item">
-          <span class="peso-nome">{criterio.replace('_', ' ')}</span>
-          <span class="peso-valor">{(peso * 100).toFixed(0)}%</span>
-        </div>
-      ))}
-    </div>
-    <p class="pesos-nota">
-      <small>Para alterar os pesos, edite o arquivo <code>src/pages/ranking.astro</code> (constante PESOS).</small>
-    </p>
+    <summary>Ver Pesos do Ranking</summary>
+    <div class="pesos-grid" id="pesosGrid"></div>
+    <p class="pesos-nota"><small>Pesos aplicados sobre as notas (0-10) de cada criterio. Editais com maior "peso/importancia" sao priorizados.</small></p>
   </details>
 
-  {ranking.length === 0 ? (
-    <div class="empty-state">
-      <p>Nenhum edital com notas preenchidas para gerar o ranking.</p>
-      <p>Processe um edital e preencha as notas de avaliação (0-10) para cada critério.</p>
-      <a href={`${import.meta.env.BASE_URL}adicionar/`} class="btn btn-primary">Adicionar Edital</a>
-    </div>
-  ) : (
-    <>
-      <div class="ranking-list">
-        {ranking.map((ed, i) => (
-          <div class={`ranking-item ${i < 3 ? 'top-' + (i+1) : ''}`}>
-            <div class="ranking-position">
-              <span class="medal">{medalhas[i] || `${i+1}º`}</span>
-            </div>
-            <div class="ranking-info">
-              <h3>{ed.sigla || ed.orgao}</h3>
-              <p>{ed.cargo}</p>
-              <div class="ranking-details">
-                <span>💰 Remun: {ed.notas?.remuneracao || '—'}</span>
-                <span>🎁 Benef: {ed.notas?.beneficios || '—'}</span>
-                <span>📈 Cresc: {ed.notas?.crescimento || '—'}</span>
-                <span>🏠 QV: {ed.notas?.qualidade_vida || '—'}</span>
-                <span>🔄 Flex: {ed.notas?.flexibilidade || '—'}</span>
-                <span>🔒 Estab: {ed.notas?.estabilidade || '—'}</span>
-                <span>💻 TI: {ed.notas?.valorizacao_ti || '—'}</span>
-                <span>📍 Local: {ed.notas?.localizacao || '—'}</span>
-              </div>
-            </div>
-            <div class="ranking-score">
-              <span class="score-value">{ed.notaFinal.toFixed(2)}</span>
-              <span class="score-label">pontos</span>
-            </div>
-          </div>
-        ))}
+  <div id="loadingState" class="loading-state">
+    <p>Carregando ranking...</p>
+  </div>
+
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <p>Nenhum edital com notas preenchidas para gerar o ranking.</p>
+    <p>Processe um edital e preencha as notas de avaliacao (0-10) para cada criterio.</p>
+    <a href={`${import.meta.env.BASE_URL}adicionar/`} class="btn btn-primary">Adicionar Edital</a>
+  </div>
+
+  <div id="contentArea" style="display:none;">
+    <div class="ranking-list" id="rankingList"></div>
+
+    <section class="chart-section">
+      <h2>Comparativo Radar (Top 4)</h2>
+      <canvas id="chartRadar" height="400"></canvas>
+    </section>
+  </div>
+</Base>
+
+<script>
+  import { listEditais } from '../lib/github-api.js';
+
+  const PESOS = {
+    remuneracao: 0.20,
+    beneficios: 0.15,
+    crescimento: 0.15,
+    qualidade_vida: 0.15,
+    flexibilidade: 0.10,
+    estabilidade: 0.10,
+    valorizacao_ti: 0.10,
+    localizacao: 0.05,
+  };
+
+  const medalhas = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
+
+  async function init() {
+    const loading = document.getElementById('loadingState');
+    const empty = document.getElementById('emptyState');
+    const content = document.getElementById('contentArea');
+
+    // Render pesos
+    const pesosGrid = document.getElementById('pesosGrid');
+    pesosGrid.innerHTML = Object.entries(PESOS).map(([criterio, peso]) => `
+      <div class="peso-item">
+        <span class="peso-nome">${criterio.replace('_', ' ')}</span>
+        <span class="peso-valor">${(peso * 100).toFixed(0)}%</span>
       </div>
+    `).join('');
 
-      <!-- Gráfico Radar -->
-      <section class="chart-section">
-        <h2>Comparativo Radar (Top 4)</h2>
-        <canvas id="chartRadar" height="400"></canvas>
-      </section>
+    try {
+      const allEditais = await listEditais();
+      const editais = allEditais.filter(e => e.notas && typeof e.notas === 'object');
 
-      <script define:vars={{ ranking, PESOS }}>
-        const top4 = ranking.slice(0, 4);
-        const cores = ['#4472C4', '#70AD47', '#C55A11', '#7030A0'];
-        const criterios = Object.keys(PESOS).map(c => c.replace('_', ' '));
-
-        const ctx = document.getElementById('chartRadar').getContext('2d');
-        new Chart(ctx, {
-          type: 'radar',
-          data: {
-            labels: criterios,
-            datasets: top4.map((ed, i) => ({
-              label: ed.sigla || ed.orgao?.substring(0, 12),
-              data: Object.keys(PESOS).map(c => ed.notas?.[c] || 0),
-              borderColor: cores[i],
-              backgroundColor: cores[i] + '33',
-              borderWidth: 2,
-              pointRadius: 4,
-            }))
-          },
-          options: {
-            responsive: true,
-            scales: {
-              r: {
-                min: 0,
-                max: 10,
-                ticks: { stepSize: 2 }
-              }
-            },
-            plugins: {
-              legend: { position: 'bottom' }
+      // Calcular nota ponderada
+      const ranking = editais
+        .map(ed => {
+          const notas = ed.notas || {};
+          let pontuacao = 0;
+          let pesoTotal = 0;
+          for (const [criterio, peso] of Object.entries(PESOS)) {
+            const nota = notas[criterio];
+            if (nota != null && nota > 0) {
+              pontuacao += nota * peso;
+              pesoTotal += peso;
             }
           }
-        });
-      </script>
-    </>
-  )}
-</Base>
+          const totalPesos = Object.values(PESOS).reduce((a, b) => a + b, 0);
+          const notaFinal = pesoTotal > 0 ? (pontuacao / pesoTotal) * totalPesos : 0;
+          // Apply peso/importancia multiplier
+          const importancia = ed.peso != null ? ed.peso / 5 : 1; // 5 is neutral
+          return { ...ed, notaFinal: Math.round(notaFinal * importancia * 100) / 100 };
+        })
+        .filter(e => e.notaFinal > 0)
+        .sort((a, b) => b.notaFinal - a.notaFinal);
+
+      loading.style.display = 'none';
+
+      if (ranking.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      content.style.display = 'block';
+      renderRanking(ranking);
+      renderRadar(ranking);
+    } catch (err) {
+      loading.innerHTML = `<p style="color:var(--danger);">Erro: ${err.message}</p>`;
+    }
+  }
+
+  function renderRanking(ranking) {
+    const list = document.getElementById('rankingList');
+    list.innerHTML = ranking.map((ed, i) => `
+      <div class="ranking-item ${i < 3 ? 'top-' + (i + 1) : ''}">
+        <div class="ranking-position">
+          <span class="medal">${medalhas[i] || (i + 1) + 'o'}</span>
+        </div>
+        <div class="ranking-info">
+          <h3>${ed.sigla || ed.orgao || ''}</h3>
+          <p>${ed.cargo || ''}</p>
+          <div class="ranking-details">
+            <span>Remun: ${ed.notas?.remuneracao || '—'}</span>
+            <span>Benef: ${ed.notas?.beneficios || '—'}</span>
+            <span>Cresc: ${ed.notas?.crescimento || '—'}</span>
+            <span>QV: ${ed.notas?.qualidade_vida || '—'}</span>
+            <span>Flex: ${ed.notas?.flexibilidade || '—'}</span>
+            <span>Estab: ${ed.notas?.estabilidade || '—'}</span>
+            <span>TI: ${ed.notas?.valorizacao_ti || '—'}</span>
+            <span>Local: ${ed.notas?.localizacao || '—'}</span>
+          </div>
+        </div>
+        <div class="ranking-score">
+          <span class="score-value">${ed.notaFinal.toFixed(2)}</span>
+          <span class="score-label">pontos</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderRadar(ranking) {
+    const top4 = ranking.slice(0, 4);
+    const cores = ['#4472C4', '#70AD47', '#C55A11', '#7030A0'];
+    const criterios = Object.keys(PESOS).map(c => c.replace('_', ' '));
+
+    const ctx = document.getElementById('chartRadar').getContext('2d');
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: criterios,
+        datasets: top4.map((ed, i) => ({
+          label: ed.sigla || (ed.orgao || '').substring(0, 12),
+          data: Object.keys(PESOS).map(c => ed.notas?.[c] || 0),
+          borderColor: cores[i],
+          backgroundColor: cores[i] + '33',
+          borderWidth: 2,
+          pointRadius: 4,
+        }))
+      },
+      options: {
+        responsive: true,
+        scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  init();
+</script>
