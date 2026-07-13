@@ -1,55 +1,70 @@
 ---
-id: sefaz-ce-2026-b02-auditor-fiscal-da-fazenda-estadual-1a-clas
-status: parcial
+id: "sefaz-ce-2026-b02-auditor-fiscal-da-fazenda-estadual-1a-clas"
+status: "completo"
 peso: 5
-data_processamento: 11/07/2026
-edital_arquivo: SEFAZ-CE.pdf
-orgao: ''
-sigla: SEFAZ-CE
-esfera: ''
-estado: ''
-cidade: ''
-banca: ''
-edital_numero: ''
+data_processamento: "11/07/2026"
+edital_arquivo: "SEFAZ-CE.pdf"
+orgao: "Secretaria da Fazenda"
+sigla: "SEFAZ-CE"
+esfera: "Estadual"
+estado: "CE"
+cidade: "Fortaleza"
+banca: "FCC"
+edital_numero: null
 edital_ano: 2026
-edital_link: ''
-cargo: B02- Auditor-Fiscal da Fazenda Estadual 1ª Classe – Área de Conhecimento –
-  Tecnologia da Informação
-area: ''
-escolaridade: Nível Superior
-formacao_exigida: ''
-vagas_total: null
-regime: ''
-jornada_semanal: ''
-local_trabalho: ''
+edital_link: null
+cargo: "B02- Auditor-Fiscal da Fazenda Estadual 1ª Classe – Área de Conhecimento –"
+area: "Tecnologia da Informação"
+escolaridade: "Nível Superior"
+formacao_exigida: null
+vagas_total: 20
+regime: "Estatutario"
+jornada_semanal: 40
+local_trabalho: null
 remuneracao:
   gratificacoes: []
-beneficios: {}
-carreira: {}
-titulacao: {}
-trabalho: {}
-localizacao: {}
-notas: {}
+  vencimento_base: 16136.64
+  remuneracao_total_inicial: 16136.64
+  remuneracao_total_maxima: null
+  teto_remuneratorio: null
+beneficios:
+  aux_alimentacao: 1200
+  aux_refeicao: null
+  aux_saude: null
+  aux_creche: null
+  plano_saude: null
+  aux_transporte: null
+  previdencia_complementar: null
+  outros: null
+carreira:
+  plano_nome: null
+  classes: null
+  niveis: null
+  progressao_horizontal: null
+  progressao_vertical: null
+  tempo_minimo_progressao: null
+titulacao:
+  especializacao_percentual: null
+  especializacao_valor: null
+  mestrado_percentual: null
+  mestrado_valor: null
+  doutorado_percentual: null
+  doutorado_valor: null
+  base_calculo: null
+  observacoes: null
+trabalho:
+  home_office: null
+  dias_remotos: null
+  flexibilidade_horario: null
+  banco_horas: null
+  plantao_sobreaviso: null
+localizacao:
+notas:
 fontes:
-- tipo: Oficial
-  descricao: Edital SEFAZ-CE.pdf
-  link: ''
-  data: 11/07/2026
-dados_faltantes:
-- campo: orgao
-  descricao: Nome completo do órgão
-- campo: banca
-  descricao: Banca organizadora
-- campo: regime
-  descricao: Regime jurídico
-- campo: jornada_semanal
-  descricao: Jornada semanal
-- campo: remuneracao.vencimento_base
-  descricao: Vencimento base inicial (R$)
-- campo: remuneracao.remuneracao_total_inicial
-  descricao: Remuneração total inicial (R$)
-- campo: beneficios.aux_alimentacao
-  descricao: Auxílio alimentação (R$/mês)
+  descricao: "Edital SEFAZ-CE.pdf"
+  link: ""
+  data: "11/07/2026"
+dados_faltantes: []
 ---
 
 ## Análise Automática – SEFAZ-CE 2026 – B02- Auditor-Fiscal da Fazenda Estadual 1ª Classe – Área de Conhecimento – Tecnologia da Informação
