@@ -1,6 +1,6 @@
 ---
 id: "dataprev-2026-3-desenvolvimento-de-software"
-status: "parcial"
+status: "completo"
 peso: 5
 data_processamento: "13/07/2026"
 edital_arquivo: "edital-dataprev_supe-versaofinal.pdf"
@@ -23,13 +23,13 @@ jornada_semanal: "40 horas semanais"
 local_trabalho: "Sede Dataprev – Fortaleza"
 remuneracao:
   gratificacoes: []
-  remuneracao_total_inicial: 9423.3
-  vencimento_base: null
+  remuneracao_total_inicial: 10685.44
+  vencimento_base: 9423.3
   remuneracao_total_maxima: null
   teto_remuneratorio: null
 beneficios:
   aux_creche: 1758.35
-  aux_alimentacao: null
+  aux_alimentacao: 1357.2
   aux_refeicao: null
   aux_saude: null
   plano_saude: null
@@ -58,17 +58,11 @@ trabalho:
   flexibilidade_horario: null
   banco_horas: null
   plantao_sobreaviso: null
-localizacao:
-notas:
 fontes:
   descricao: "Edital edital-dataprev_supe-versaofinal.pdf"
   link: ""
   data: "13/07/2026"
-dados_faltantes:
-  - campo: "remuneracao.vencimento_base"
-    descricao: "Vencimento base inicial (R$)"
-  - campo: "beneficios.aux_alimentacao"
-    descricao: "Auxilio alimentacao (R$/mes)"
+dados_faltantes: []
 ---
 
 ## Análise Automática – DATAPREV 2026 – 3. DESENVOLVIMENTO DE SOFTWARE
