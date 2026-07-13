@@ -152,7 +152,7 @@ import Base from '../../layouts/Base.astro';
       originalData = fileData.frontmatter;
       originalContent = fileData.body;
       fileSha = fileData.sha;
-      faltantes = (originalData.dados_faltantes || []).map(d => d.campo);
+      faltantes = (Array.isArray(originalData.dados_faltantes) ? originalData.dados_faltantes : []).map(d => d.campo);
 
       subtitle.textContent = `${originalData.sigla || originalData.orgao || ''} - ${originalData.cargo || editalId}`;
       if (faltantes.length > 0) {
