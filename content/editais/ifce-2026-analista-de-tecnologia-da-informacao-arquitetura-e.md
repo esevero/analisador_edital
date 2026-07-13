@@ -1,62 +1,70 @@
 ---
-id: ifce-2026-analista-de-tecnologia-da-informacao-arquitetura-e
-status: parcial
+id: "ifce-2026-analista-de-tecnologia-da-informacao-arquitetura-e"
+status: "completo"
 peso: 5
-data_processamento: 13/07/2026
-edital_arquivo: 75092fe1-4e93-4ed6-b78d-ab3b875c65d6 (1).pdf
-orgao: 'MINISTÉRIO DA EDUCAÇÃO
-
-  SECRETARIA DE EDUCAÇÃO PROFISSIONAL E TECNOLÓGICA
-
-  INSTITUTO FEDERAL DE EDUCAÇ'
-sigla: IFCE
-esfera: ''
-estado: ''
-cidade: ''
-banca: AOCP
-edital_numero: ''
+data_processamento: "13/07/2026"
+edital_arquivo: "75092fe1-4e93-4ed6-b78d-ab3b875c65d6 (1).pdf"
+orgao: "MINISTÉRIO DA EDUCAÇÃO"
+sigla: "IFCE"
+esfera: "Federal"
+estado: "CE"
+cidade: "Fortaleza"
+banca: "AOCP"
+edital_numero: 1
 edital_ano: 2026
-edital_link: ''
-cargo: Analista de Tecnologia da Informação - Arquitetura e Desenvolvimento de Sistemas
-area: ''
-escolaridade: Nível Superior
-formacao_exigida: ''
-vagas_total: 5
-regime: Estatutário
-jornada_semanal: ''
-local_trabalho: ''
+edital_link: null
+cargo: "Analista de Tecnologia da Informação - Arquitetura e Desenvolvimento de Sistemas"
+area: null
+escolaridade: "Nível Superior"
+formacao_exigida: null
+vagas_total: 1
+regime: "Estatutario"
+jornada_semanal: 40
+local_trabalho: "Sede IFCE"
 remuneracao:
-  gratificacoes:
-  - nome: GAM
-    valor_inicial: null
-    valor_maximo: null
-    percentual: ''
-    base_calculo: ''
-    observacao: ''
+  gratificacoes: []
+  vencimento_base: 4967.04
+  remuneracao_total_inicial: 6457.15
+  remuneracao_total_maxima: null
+  teto_remuneratorio: null
 beneficios:
   aux_creche: 484.9
-carreira: {}
+  aux_alimentacao: 1175
+  aux_refeicao: null
+  aux_saude: null
+  plano_saude: null
+  aux_transporte: null
+  previdencia_complementar: null
+  outros: null
+carreira:
+  plano_nome: null
+  classes: null
+  niveis: null
+  progressao_horizontal: null
+  progressao_vertical: null
+  tempo_minimo_progressao: null
 titulacao:
-  especializacao_percentual: 30.0
-  mestrado_percentual: 52.0
-  doutorado_percentual: 75.0
-trabalho: {}
-localizacao: {}
-notas: {}
+  especializacao_percentual: 30
+  mestrado_percentual: 52
+  doutorado_percentual: 75
+  especializacao_valor: 1490.11
+  mestrado_valor: 2582.86
+  doutorado_valor: 3725.28
+  base_calculo: null
+  observacoes: null
+trabalho:
+  home_office: null
+  dias_remotos: null
+  flexibilidade_horario: null
+  banco_horas: null
+  plantao_sobreaviso: null
+localizacao:
+notas:
 fontes:
-- tipo: Oficial
-  descricao: Edital 75092fe1-4e93-4ed6-b78d-ab3b875c65d6 (1).pdf
-  link: ''
-  data: 13/07/2026
-dados_faltantes:
-- campo: jornada_semanal
-  descricao: Jornada semanal
-- campo: remuneracao.vencimento_base
-  descricao: Vencimento base inicial (R$)
-- campo: remuneracao.remuneracao_total_inicial
-  descricao: Remuneração total inicial (R$)
-- campo: beneficios.aux_alimentacao
-  descricao: Auxílio alimentação (R$/mês)
+  descricao: "Edital 75092fe1-4e93-4ed6-b78d-ab3b875c65d6 (1).pdf"
+  link: ""
+  data: "13/07/2026"
+dados_faltantes: []
 ---
 
 ## Análise Automática – IFCE 2026 – Analista de Tecnologia da Informação - Arquitetura e Desenvolvimento de Sistemas
