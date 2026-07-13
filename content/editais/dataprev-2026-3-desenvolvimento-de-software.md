@@ -1,7 +1,7 @@
 ---
 id: "dataprev-2026-3-desenvolvimento-de-software"
 status: "completo"
-peso: 5
+peso: 9
 data_processamento: "13/07/2026"
 edital_arquivo: "edital-dataprev_supe-versaofinal.pdf"
 orgao: "EMPRESA DE TECNOLOGIA E INFORMAÇÕES DA PREVIDÊNCIA"
