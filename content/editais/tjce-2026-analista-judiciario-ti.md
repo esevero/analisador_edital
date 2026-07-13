@@ -1,6 +1,6 @@
 ---
 id: "tjce-2026-analista-judiciario-ti"
-status: "parcial"
+status: "completo"
 peso: 9
 data_processamento: "10/07/2026"
 edital_arquivo: "edital-tjce-2026-fcc.pdf"
@@ -18,7 +18,7 @@ area: "Tecnologia da Informação"
 escolaridade: "Nível Superior"
 formacao_exigida: "Graduação em TI ou área correlata"
 vagas_total: null
-regime: null
+regime: "Estatutario"
 jornada_semanal: "40 horas semanais"
 local_trabalho: "Fórum Clóvis Beviláqua / Sede TJCE – Fortaleza"
 remuneracao:
@@ -90,9 +90,7 @@ fontes:
     descricao: "LC CE nº 22/2000 e alterações"
     link: "https://www.tjce.jus.br/legislacao"
     data: "10/07/2026"
-dados_faltantes:
-  - campo: "regime"
-    descricao: "Regime juridico"
+dados_faltantes: []
 ---
 
 ## Análise – TJCE 2026 – Analista Judiciário TI
