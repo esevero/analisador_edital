@@ -10,23 +10,23 @@ esfera: "Estadual"
 estado: "CE"
 cidade: "Fortaleza"
 banca: "Instituto Avalia"
-edital_numero: null
-edital_ano: 2023
+edital_numero: 1
+edital_ano: 2026
 edital_link: "https://www.concursosfcc.com.br/concursos/sface125/sface125_edital_de_abertura_final-publicar_-_docx.pdf"
 cargo: "Analista de Políticas Públicas – Tecnologia da Informação"
 area: "Tecnologia da Informação"
 escolaridade: "Nível Superior"
 formacao_exigida: null
-vagas_total: null
+vagas_total: 1
 regime: "CLT"
 jornada_semanal: "40 horas semanais"
 local_trabalho: "Sede IPECE – Fortaleza"
 remuneracao:
-  vencimento_base: 5428.69
+  vencimento_base: 5467.22
   gratificacoes: []
   remuneracao_total_inicial: 16884.27
-  remuneracao_total_maxima: 20651.42
-  teto_remuneratorio: 34000
+  remuneracao_total_maxima: null
+  teto_remuneratorio: null
 beneficios:
   aux_alimentacao: 800
   aux_refeicao: 1200
@@ -49,13 +49,13 @@ carreira:
   criterios: "Avaliação de desempenho + tempo de serviço"
   avaliacao_desempenho: "Anual"
 titulacao:
-  especializacao_percentual: 7
-  especializacao_valor: 380
-  mestrado_percentual: 12
-  mestrado_valor: 651
-  doutorado_percentual: 18
-  doutorado_valor: 977
-  base_calculo: "Vencimento base (R$ 5.428,69)"
+  especializacao_percentual: 15
+  especializacao_valor: 820.08
+  mestrado_percentual: 30
+  mestrado_valor: 1640.17
+  doutorado_percentual: 60
+  doutorado_valor: 3280.33
+  base_calculo: "Vencimento base (R$ 5.467,22)"
   certificacoes: ""
   observacoes: "Percentual incide sobre o vencimento base apenas (não sobre GDAP)"
 trabalho:
