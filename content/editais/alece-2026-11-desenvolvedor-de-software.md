@@ -1,10 +1,10 @@
 ---
 id: "alece-2026-11-desenvolvedor-de-software"
-status: "parcial"
+status: "completo"
 peso: 5
 data_processamento: "13/07/2026"
 edital_arquivo: "92SHKTNR8CQRREURU9908WY01GV03MPPNV9GHC4BXCFNDYYWY0IOO0CVCS694028D00UG376WQ6J3GMN7514"
-orgao: "'ASSEMBLEIA LEGISLATIVA DO ESTADO DO CEARÁ"
+orgao: "ASSEMBLEIA LEGISLATIVA DO ESTADO DO CEARÁ"
 sigla: "ALECE"
 esfera: "Estadual"
 estado: "CE"
@@ -24,11 +24,11 @@ local_trabalho: "Sede ALECE"
 remuneracao:
   gratificacoes: []
   vencimento_base: 6126.48
-  remuneracao_total_inicial: null
+  remuneracao_total_inicial: 6126.48
   remuneracao_total_maxima: null
   teto_remuneratorio: null
 beneficios:
-  aux_alimentacao: null
+  aux_alimentacao: 1200
   aux_refeicao: null
   aux_saude: null
   aux_creche: null
@@ -58,17 +58,11 @@ trabalho:
   flexibilidade_horario: "Sim"
   banco_horas: "Sim"
   plantao_sobreaviso: "Não habitual"
-localizacao:
-notas:
 fontes:
   descricao: "Edital 92SHKTNR8CQRREURU9908WY01GV03MPPNV9GHC4BXCFNDYYWY0IOO0CVCS694028D00UG376WQ6J3GMN7514"
   link: ""
   data: "13/07/2026"
-dados_faltantes:
-  - campo: "remuneracao.remuneracao_total_inicial"
-    descricao: "Remuneracao total inicial (R$)"
-  - campo: "beneficios.aux_alimentacao"
-    descricao: "Auxilio alimentacao (R$/mes)"
+dados_faltantes: []
 ---
 
 ## Análise Automática – ALECE 2026 – 11 – Desenvolvedor de Software
